@@ -22,20 +22,6 @@ type Data struct {
 	BigNumber *int64  `sproto:"varint,3,name=bignumber"`
 }
 
-func TestGetSprotoType(t *testing.T) {
-	typ := reflect.TypeOf(Person{})
-	sp := sproto.GetSprotoType(typ)
-	if len(sp.Fields) != typ.NumField() {
-		t.Fatal("fields num wrong")
-	}
-
-	for _, field := range sp.Fields {
-		if field.Tag < 0 {
-			t.Fatalf("field:%s tag is not proper", field.Name)
-		}
-	}
-}
-
 type TestCase struct {
 	Name   string
 	Struct interface{}
@@ -189,6 +175,30 @@ func isEqualBytes(dst, src []byte) bool {
 func TestEncode(t *testing.T) {
 	for _, tc := range testCases {
 		output, err := sproto.Encode(tc.Struct)
+		if err != nil {
+			t.Fatalf("test case *%s* failed with error:%s", tc.Name, err)
+		}
+		if !isEqualBytes(output, tc.Data) {
+			t.Log("encoded:", output)
+			t.Log("expected:", tc.Data)
+			t.Fatalf("test case %s failed", tc.Name)
+		}
+	}
+}
+
+func TestDecode(t *testing.T) {
+	for _, tc := range testCases {
+		sp := reflect.New(reflect.TypeOf(tc.Struct).Elem()).Interface()
+		used, err := sproto.Decode(tc.Data, sp)
+		if err != nil {
+			t.Fatalf("test case *%s* failed with error:%s", tc.Name, err)
+		}
+
+		if used != len(tc.Data) {
+			t.Fatalf("test case *%s* failed: data length mismatch", tc.Name)
+		}
+
+		output, err := sproto.Encode(sp)
 		if err != nil {
 			t.Fatalf("test case *%s* failed with error:%s", tc.Name, err)
 		}

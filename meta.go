@@ -23,7 +23,7 @@ var (
 
 type headerEncoder func(st *SprotoField, v reflect.Value) (uint16, bool)
 type encoder func(st *SprotoField, v reflect.Value) []byte
-type decoder func(st *SprotoField, v reflect.Value) ([]byte, error)
+type decoder func(val *uint16, data []byte, st *SprotoField, v reflect.Value) error
 
 type SprotoField struct {
 	Name     string
@@ -32,8 +32,7 @@ type SprotoField struct {
 	Tag      int
 	Array    bool
 
-	stype reflect.Type // for struct types only
-	st    *SprotoType  // for struct types only
+	st *SprotoType // for struct types only
 
 	index     []int // index sequence for Value.FieldByIndex
 	headerEnc headerEncoder
@@ -86,26 +85,31 @@ func (sf *SprotoField) assertWire(expectedWire string, expectedArray bool) {
 }
 
 func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
+	var stype reflect.Type
 	switch t1 := f.Type; t1.Kind() {
 	case reflect.Ptr:
 		switch t2 := t1.Elem(); t2.Kind() {
 		case reflect.Bool:
 			sf.headerEnc = headerEncodeBool
+			sf.dec = decodeBool
 			sf.assertWire(WireBooleanName, false)
 		case reflect.Int8, reflect.Uint8, reflect.Int16, reflect.Uint16,
 			reflect.Int32, reflect.Uint32, reflect.Int64, reflect.Uint64,
 			reflect.Int, reflect.Uint:
 			sf.headerEnc = headerEncodeInt
 			sf.enc = encodeInt
+			sf.dec = decodeInt
 			sf.assertWire(WireVarintName, false)
 		case reflect.String:
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeString
+			sf.dec = decodeString
 			sf.assertWire(WireBytesName, false)
 		case reflect.Struct:
-			sf.stype = t1.Elem()
+			stype = t1.Elem()
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeStruct
+			sf.dec = decodeStruct
 			sf.assertWire(WireStructName, false)
 		default:
 			panic("sproto: no coders for " + t1.Kind().String() + " -> " + t2.Kind().String())
@@ -115,13 +119,16 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
 		case reflect.Bool:
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeBoolSlice
+			sf.dec = decodeBoolSlice
 			sf.assertWire(WireBooleanName, true)
 		case reflect.Uint8:
 			sf.headerEnc = headerEncodeDefault
 			if sf.Wire == WireBytesName {
 				sf.enc = encodeBytes
+				sf.dec = decodeBytes
 			} else {
 				sf.enc = encodeIntSlice
+				sf.dec = decodeIntSlice
 			}
 			sf.assertWire(WireBytesName, true)
 		case reflect.Int8, reflect.Int16, reflect.Uint16,
@@ -129,16 +136,20 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
 			reflect.Int, reflect.Uint:
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeIntSlice
+			sf.dec = decodeIntSlice
 			sf.assertWire(WireVarintName, true)
 		case reflect.String:
 			sf.headerEnc = headerEncodeDefault
-			sf.enc = encodeString
+			sf.enc = encodeStringSlice
+			sf.dec = decodeStringSlice
+			sf.assertWire(WireBytesName, true)
 		case reflect.Ptr:
 			switch t3 := t2.Elem(); t3.Kind() {
 			case reflect.Struct:
-				sf.stype = t2.Elem()
+				stype = t2.Elem()
 				sf.headerEnc = headerEncodeDefault
 				sf.enc = encodeStructSlice
+				sf.dec = decodeStructSlice
 				sf.assertWire(WireStructName, true)
 			default:
 				panic("sproto: no coders for " + t1.Kind().String() + " -> " + t2.Kind().String() + " -> " + t3.Kind().String())
@@ -150,8 +161,8 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
 		panic("sproto: no coders for " + t1.Kind().String())
 	}
 
-	if sf.stype != nil {
-		sf.st = getSprotoTypeLocked(sf.stype)
+	if stype != nil {
+		sf.st = getSprotoTypeLocked(stype)
 	}
 }
 
@@ -171,6 +182,7 @@ func (sf *SprotoField) init(f *reflect.StructField) {
 }
 
 type SprotoType struct {
+	Name   string // struct name
 	Fields []*SprotoField
 	tagMap map[int]int // tag -> fileds index
 	order  []int       // list of struct field numbers in tag order
@@ -182,6 +194,13 @@ func (st *SprotoType) Less(i, j int) bool {
 }
 func (st *SprotoType) Swap(i, j int) {
 	st.order[i], st.order[j] = st.order[j], st.order[i]
+}
+
+func (st *SprotoType) FieldByTag(tag int) *SprotoField {
+	if index, ok := st.tagMap[tag]; ok {
+		return st.Fields[index]
+	}
+	return nil
 }
 
 func GetSprotoType(t reflect.Type) *SprotoType {
@@ -201,6 +220,8 @@ func getSprotoTypeLocked(t reflect.Type) *SprotoType {
 
 	st := new(SprotoType)
 	spMap[t] = st
+
+	st.Name = t.Name()
 
 	numField := t.NumField()
 	st.Fields = make([]*SprotoField, numField)
@@ -241,6 +262,12 @@ func getbase(sp interface{}) (t reflect.Type, v reflect.Value, err error) {
 		err = ErrNonStruct
 		return
 	}
+
 	v = reflect.ValueOf(sp)
+	if v.IsNil() {
+		err = ErrNil
+		return
+	}
+
 	return
 }
