@@ -134,7 +134,7 @@ func encodeString(sf *SprotoField, v reflect.Value) []byte {
 }
 
 func encodeBytes(sf *SprotoField, v reflect.Value) []byte {
-	bytes := v.Elem().Bytes()
+	bytes := v.Bytes()
 	buf := make([]byte, len(bytes))
 	copy(buf, bytes)
 	return buf
@@ -168,9 +168,10 @@ func encodeStringSlice(sf *SprotoField, v reflect.Value) []byte {
 	offset := 0
 	for i := 0; i < v.Len(); i++ {
 		str := v.Index(i).String()
-		writeUint32(buf[offset:], uint32(len(str)))
+		strLen := len(str)
+		writeUint32(buf[offset:], uint32(strLen))
 		copy(buf[offset+4:], str)
-		offset = 4 + len(str)
+		offset += 4 + strLen
 	}
 	return buf
 }

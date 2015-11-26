@@ -126,11 +126,12 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
 			if sf.Wire == WireBytesName {
 				sf.enc = encodeBytes
 				sf.dec = decodeBytes
+				sf.assertWire(WireBytesName, false)
 			} else {
 				sf.enc = encodeIntSlice
 				sf.dec = decodeIntSlice
+				sf.assertWire(WireVarintName, true)
 			}
-			sf.assertWire(WireBytesName, true)
 		case reflect.Int8, reflect.Int16, reflect.Uint16,
 			reflect.Int32, reflect.Uint32, reflect.Int64, reflect.Uint64,
 			reflect.Int, reflect.Uint:

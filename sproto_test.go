@@ -16,10 +16,12 @@ type Person struct {
 }
 
 type Data struct {
-	Numbers   []int64 `sproto:"varint,0,array,name=numbers"`
-	Bools     []bool  `sproto:"boolean,1,array,name=bools"`
-	Number    *int    `sproto:"varint,2,name=number"`
-	BigNumber *int64  `sproto:"varint,3,name=bignumber"`
+	Numbers   []int64  `sproto:"varint,0,array,name=numbers"`
+	Bools     []bool   `sproto:"boolean,1,array,name=bools"`
+	Number    *int     `sproto:"varint,2,name=number"`
+	BigNumber *int64   `sproto:"varint,3,name=bignumber"`
+	Strings   []string `sproto:"bytes,4,array,name=strings"`
+	Bytes     []byte   `sproto:"bytes,5,name=bytes"`
 }
 
 type TestCase struct {
@@ -129,13 +131,49 @@ var testCases []*TestCase = []*TestCase{
 		},
 		Data: []byte{
 			0x02, 0x00, // (fn = 2)
-			0x01, 0x00, // (skip id)
-			0x00, 0x00, // (id = 2, value in data part)
+			0x01, 0x00, // (skip id = 0)
+			0x00, 0x00, // (id = 1, value in data part)
 
 			0x03, 0x00, 0x00, 0x00, // (sizeof bools)
 			0x00, //(false)
 			0x01, //(true)
 			0x00, //(false)
+		},
+	},
+	&TestCase{
+		Name: "Bytes",
+		Struct: &Data{
+			Bytes: []byte{0x28, 0x29, 0x30, 0x31},
+		},
+		Data: []byte{
+			0x02, 0x00, // (fn = 2)
+			0x09, 0x00, // (skip id = 4)
+			0x00, 0x00, // (id = 5, value in data part)
+
+			0x04, 0x00, 0x00, 0x00, // (sizeof bytes)
+			0x28, //(0x28)
+			0x29, //(0x29)
+			0x30, //(0x30)
+			0x31, //(0x31)
+		},
+	},
+	&TestCase{
+		Name: "StringArray",
+		Struct: &Data{
+			Strings: []string{"Bob", "Alice", "Carol"},
+		},
+		Data: []byte{
+			0x02, 0x00, // (fn = 2)
+			0x07, 0x00, // (skip id = 3)
+			0x00, 0x00, // (id = 4, value in data part)
+
+			0x19, 0x00, 0x00, 0x00, // (sizeof []string)
+			0x03, 0x00, 0x00, 0x00, // (sizeof "Bob")
+			0x42, 0x6F, 0x62, // ("Bob")
+			0x05, 0x00, 0x00, 0x00, // (sizeof "Alice")
+			0x41, 0x6C, 0x69, 0x63, 0x65, //("Alice")
+			0x05, 0x00, 0x00, 0x00, //(sizeof "Carol")
+			0x43, 0x61, 0x72, 0x6F, 0x6C, //("Carol")
 		},
 	},
 	&TestCase{
@@ -146,7 +184,7 @@ var testCases []*TestCase = []*TestCase{
 		},
 		Data: []byte{
 			0x03, 0x00, // (fn = 3)
-			0x03, 0x00, // (skip id 0/1)
+			0x03, 0x00, // (skip id = 1)
 			0x00, 0x00, // (id = 2, value in data part)
 			0x00, 0x00, // (id = 3, value in data part)
 
