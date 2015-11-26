@@ -9,7 +9,21 @@ var (
 	ErrNonStruct = errors.New("sproto: Encode called with Non-Ptr")
 	ErrNil       = errors.New("sproto: Encode called with nil")
 	ErrTooShort  = errors.New("sproto: Decode data is too short")
+	ErrUnpack    = errors.New("sproto: Unpack data failed")
 )
+
+func Append(dst, src []byte) []byte {
+	l := len(dst)
+	if l+len(src) > cap(dst) {
+		// allocate double what's needed, for future growth
+		buf := make([]byte, (l+len(src))*2)
+		copy(buf, dst)
+		dst = buf
+	}
+	dst = dst[0 : l+len(src)]
+	copy(dst[l:], src)
+	return dst
+}
 
 func String(v string) *string {
 	return &v

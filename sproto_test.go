@@ -3,6 +3,7 @@ package sproto_test
 import (
 	"testing"
 
+	"bytes"
 	"reflect"
 
 	"github.com/xjdrew/gosproto"
@@ -197,26 +198,13 @@ var testCases []*TestCase = []*TestCase{
 	},
 }
 
-func isEqualBytes(dst, src []byte) bool {
-	sz := len(dst)
-	if sz != len(src) {
-		return false
-	}
-	for i := 0; i < sz; i++ {
-		if dst[i] != src[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func TestEncode(t *testing.T) {
 	for _, tc := range testCases {
 		output, err := sproto.Encode(tc.Struct)
 		if err != nil {
 			t.Fatalf("test case *%s* failed with error:%s", tc.Name, err)
 		}
-		if !isEqualBytes(output, tc.Data) {
+		if !bytes.Equal(output, tc.Data) {
 			t.Log("encoded:", output)
 			t.Log("expected:", tc.Data)
 			t.Fatalf("test case %s failed", tc.Name)
@@ -240,7 +228,7 @@ func TestDecode(t *testing.T) {
 		if err != nil {
 			t.Fatalf("test case *%s* failed with error:%s", tc.Name, err)
 		}
-		if !isEqualBytes(output, tc.Data) {
+		if !bytes.Equal(output, tc.Data) {
 			t.Log("encoded:", output)
 			t.Log("expected:", tc.Data)
 			t.Fatalf("test case %s failed", tc.Name)

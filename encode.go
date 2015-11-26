@@ -11,19 +11,6 @@ const (
 	MinInt32         = -0x80000000
 )
 
-func Append(dst, src []byte) []byte {
-	l := len(dst)
-	if l+len(src) > cap(dst) {
-		// allocate double what's needed, for future growth
-		buf := make([]byte, (l+len(src))*2)
-		copy(buf, dst)
-		dst = buf
-	}
-	dst = dst[0 : l+len(src)]
-	copy(dst[l:], src)
-	return dst
-}
-
 // put int into []byte
 func writeUint16(buf []byte, v uint16) {
 	buf[0] = uint8(v & 0xff)
