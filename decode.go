@@ -268,6 +268,9 @@ func Decode(data []byte, sp interface{}) (int, error) {
 	}
 	// clear sp
 	v.Elem().Set(reflect.Zero(t.Elem()))
-	st := GetSprotoType(t.Elem())
+	st, err := GetSprotoType(t.Elem())
+	if err != nil {
+		return 0, err
+	}
 	return decodeMessage(data, st, v)
 }

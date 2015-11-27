@@ -273,6 +273,9 @@ func Encode(sp interface{}) ([]byte, error) {
 		return nil, ErrNil
 	}
 
-	st := GetSprotoType(t.Elem())
+	st, err := GetSprotoType(t.Elem())
+	if err != nil {
+		return nil, err
+	}
 	return encodeMessage(st, v), nil
 }

@@ -18,7 +18,7 @@ const (
 
 var (
 	mutex sync.Mutex
-	spMap = make(map[reflect.Type]*SprotoType)
+	stMap = make(map[reflect.Type]*SprotoType)
 )
 
 type headerEncoder func(st *SprotoField, v reflect.Value) (uint16, bool)
@@ -41,23 +41,23 @@ type SprotoField struct {
 }
 
 // parse filed meta information
-func (sf *SprotoField) parse(s string) {
+func (sf *SprotoField) parse(s string) error {
 	// children,object,3,array
 	fields := strings.Split(s, ",")
 	if len(fields) < 2 {
-		panic("sproto: tag has 2 fields at least")
+		return fmt.Errorf("sproto: parse(%s) tag must have 2 or more fields", s)
 	}
 	sf.Wire = fields[0]
 	switch sf.Wire {
 	case WireVarintName, WireBooleanName, WireBytesName, WireStructName:
 	default:
-		panic("sproto: unknown wire type: " + sf.Wire)
+		return fmt.Errorf("sproto: parse(%s) unknown wire type: %s", s, sf.Wire)
 	}
 
 	var err error
 	sf.Tag, err = strconv.Atoi(fields[1])
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("sproto: parse(%s) parse tag failed: %s", s, err)
 	}
 
 	for i := 2; i < len(fields); i++ {
@@ -69,37 +69,40 @@ func (sf *SprotoField) parse(s string) {
 			sf.OrigName = f[len("name="):]
 		}
 	}
+	return nil
 }
 
-func (sf *SprotoField) assertWire(expectedWire string, expectedArray bool) {
+func (sf *SprotoField) assertWire(expectedWire string, expectedArray bool) error {
 	if sf.Wire != expectedWire {
-		panic(fmt.Sprintf("sproto: field(%s) expect %s but get %s", sf.Name, expectedWire, sf.Wire))
+		return fmt.Errorf("sproto: field(%s) expect %s but get %s", sf.Name, expectedWire, sf.Wire)
 	}
 	if sf.Array != expectedArray {
 		n := "not"
 		if expectedArray {
 			n = ""
 		}
-		panic(fmt.Sprintf("sproto: field(%s) should %s be array", sf.Name, n))
+		return fmt.Errorf("sproto: field(%s) should %s be array", sf.Name, n)
 	}
+	return nil
 }
 
-func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
+func (sf *SprotoField) setEncAndDec(f *reflect.StructField) error {
 	var stype reflect.Type
+	var err error
 	switch t1 := f.Type; t1.Kind() {
 	case reflect.Ptr:
 		switch t2 := t1.Elem(); t2.Kind() {
 		case reflect.Bool:
 			sf.headerEnc = headerEncodeBool
 			sf.dec = decodeBool
-			sf.assertWire(WireBooleanName, false)
+			err = sf.assertWire(WireBooleanName, false)
 		case reflect.Int8, reflect.Uint8, reflect.Int16, reflect.Uint16,
 			reflect.Int32, reflect.Uint32, reflect.Int64, reflect.Uint64,
 			reflect.Int, reflect.Uint:
 			sf.headerEnc = headerEncodeInt
 			sf.enc = encodeInt
 			sf.dec = decodeInt
-			sf.assertWire(WireVarintName, false)
+			err = sf.assertWire(WireVarintName, false)
 		case reflect.String:
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeString
@@ -110,9 +113,9 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeStruct
 			sf.dec = decodeStruct
-			sf.assertWire(WireStructName, false)
+			err = sf.assertWire(WireStructName, false)
 		default:
-			panic("sproto: no coders for " + t1.Kind().String() + " -> " + t2.Kind().String())
+			err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s", sf.Name, t1.Kind().String(), t2.Kind().String())
 		}
 	case reflect.Slice:
 		switch t2 := t1.Elem(); t2.Kind() {
@@ -120,17 +123,17 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeBoolSlice
 			sf.dec = decodeBoolSlice
-			sf.assertWire(WireBooleanName, true)
+			err = sf.assertWire(WireBooleanName, true)
 		case reflect.Uint8:
 			sf.headerEnc = headerEncodeDefault
 			if sf.Wire == WireBytesName {
 				sf.enc = encodeBytes
 				sf.dec = decodeBytes
-				sf.assertWire(WireBytesName, false)
+				err = sf.assertWire(WireBytesName, false)
 			} else {
 				sf.enc = encodeIntSlice
 				sf.dec = decodeIntSlice
-				sf.assertWire(WireVarintName, true)
+				err = sf.assertWire(WireVarintName, true)
 			}
 		case reflect.Int8, reflect.Int16, reflect.Uint16,
 			reflect.Int32, reflect.Uint32, reflect.Int64, reflect.Uint64,
@@ -138,7 +141,7 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeIntSlice
 			sf.dec = decodeIntSlice
-			sf.assertWire(WireVarintName, true)
+			err = sf.assertWire(WireVarintName, true)
 		case reflect.String:
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeStringSlice
@@ -151,35 +154,47 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) {
 				sf.headerEnc = headerEncodeDefault
 				sf.enc = encodeStructSlice
 				sf.dec = decodeStructSlice
-				sf.assertWire(WireStructName, true)
+				err = sf.assertWire(WireStructName, true)
 			default:
-				panic("sproto: no coders for " + t1.Kind().String() + " -> " + t2.Kind().String() + " -> " + t3.Kind().String())
+				err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s -> %s", sf.Name, t1.Kind().String(), t2.Kind().String(), t3.Kind().String())
 			}
 		default:
-			panic("sproto: no coders for " + t1.Kind().String() + " -> " + t2.Kind().String())
+			err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s", sf.Name, t1.Kind().String(), t2.Kind().String())
 		}
 	default:
-		panic("sproto: no coders for " + t1.Kind().String())
+		err = fmt.Errorf("sproto: field(%s) no coders for %s", sf.Name, t1.Kind().String())
+	}
+
+	if err != nil {
+		return err
 	}
 
 	if stype != nil {
-		sf.st = getSprotoTypeLocked(stype)
+		if sf.st, err = getSprotoTypeLocked(stype); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (sf *SprotoField) init(f *reflect.StructField) {
+func (sf *SprotoField) init(f *reflect.StructField) error {
 	sf.Name = f.Name
 	sf.OrigName = f.Name
 
 	tagString := f.Tag.Get("sproto")
 	if tagString == "" {
 		sf.Tag = -1
-		return
+		return nil
 	}
 
 	sf.index = f.Index
-	sf.parse(tagString)
-	sf.setEncAndDec(f)
+	if err := sf.parse(tagString); err != nil {
+		return err
+	}
+	if err := sf.setEncAndDec(f); err != nil {
+		return err
+	}
+	return nil
 }
 
 type SprotoType struct {
@@ -204,26 +219,24 @@ func (st *SprotoType) FieldByTag(tag int) *SprotoField {
 	return nil
 }
 
-func GetSprotoType(t reflect.Type) *SprotoType {
+func GetSprotoType(t reflect.Type) (*SprotoType, error) {
 	if t.Kind() != reflect.Struct {
-		panic("sproto: type must have kind struct")
+		return nil, fmt.Errorf("sproto: type must have kind struct")
 	}
 	mutex.Lock()
-	st := getSprotoTypeLocked(t)
-	mutex.Unlock()
-	return st
+	defer mutex.Unlock()
+	return getSprotoTypeLocked(t)
 }
 
-func getSprotoTypeLocked(t reflect.Type) *SprotoType {
-	if st, ok := spMap[t]; ok {
-		return st
+func getSprotoTypeLocked(t reflect.Type) (*SprotoType, error) {
+	if st, ok := stMap[t]; ok {
+		return st, nil
 	}
 
 	st := new(SprotoType)
-	spMap[t] = st
+	stMap[t] = st
 
 	st.Name = t.Name()
-
 	numField := t.NumField()
 	st.Fields = make([]*SprotoField, numField)
 	st.order = make([]int, numField)
@@ -232,18 +245,25 @@ func getSprotoTypeLocked(t reflect.Type) *SprotoType {
 	for i := 0; i < numField; i++ {
 		sf := new(SprotoField)
 		f := t.Field(i)
-		sf.init(&f)
+		if err := sf.init(&f); err != nil {
+			delete(stMap, t)
+			return nil, err
+		}
 
 		st.Fields[i] = sf
 		st.order[i] = i
 		if sf.Tag >= 0 {
+			// check repeated tag
+			if _, ok := st.tagMap[sf.Tag]; ok {
+				return nil, fmt.Errorf("sproto: field(%s.%s) tag repeated", st.Name, sf.Name)
+			}
 			st.tagMap[sf.Tag] = i
 		}
 	}
 
 	// Re-order prop.order
 	sort.Sort(st)
-	return st
+	return st, nil
 }
 
 // Get the type and value of a pointer to a struct from interface{}
