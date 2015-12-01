@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	WireVarintName  = "varint"  // int, uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64
+	WireVarintName  = "integer" // int, uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64
 	WireBooleanName = "boolean" // bool
-	WireBytesName   = "bytes"   // string, []byte
+	WireBytesName   = "string"  // string, []byte
 	WireStructName  = "struct"  // struct
 )
 

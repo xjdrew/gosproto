@@ -20,8 +20,8 @@ const (
 )
 
 type rpcHeader struct {
-	Type    *int `sproto:"varint,0,name=type"`
-	Session *int `sproto:"varint,1,name=session"`
+	Type    *int `sproto:"integer,0,name=type"`
+	Session *int `sproto:"integer,1,name=session"`
 }
 
 type Protocal struct {

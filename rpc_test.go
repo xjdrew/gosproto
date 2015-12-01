@@ -10,7 +10,7 @@ import (
 )
 
 type FoobarRequest struct {
-	What *string `sproto:"bytes,0,name=what"`
+	What *string `sproto:"string,0,name=what"`
 }
 
 type FoobarResponse struct {

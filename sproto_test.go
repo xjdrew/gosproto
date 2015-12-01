@@ -10,19 +10,19 @@ import (
 )
 
 type Person struct {
-	Name     *string   `sproto:"bytes,0,name=name"`
-	Age      *int      `sproto:"varint,1,name=age"`
+	Name     *string   `sproto:"string,0,name=name"`
+	Age      *int      `sproto:"integer,1,name=age"`
 	Marital  *bool     `sproto:"boolean,2,name=marital"`
 	Children []*Person `sproto:"struct,3,array,name=children"`
 }
 
 type Data struct {
-	Numbers   []int64  `sproto:"varint,0,array,name=numbers"`
+	Numbers   []int64  `sproto:"integer,0,array,name=numbers"`
 	Bools     []bool   `sproto:"boolean,1,array,name=bools"`
-	Number    *int     `sproto:"varint,2,name=number"`
-	BigNumber *int64   `sproto:"varint,3,name=bignumber"`
-	Strings   []string `sproto:"bytes,4,array,name=strings"`
-	Bytes     []byte   `sproto:"bytes,5,name=bytes"`
+	Number    *int     `sproto:"integer,2,name=number"`
+	BigNumber *int64   `sproto:"integer,3,name=bignumber"`
+	Strings   []string `sproto:"string,4,array,name=strings"`
+	Bytes     []byte   `sproto:"string,5,name=bytes"`
 }
 
 type TestCase struct {
