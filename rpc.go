@@ -8,7 +8,7 @@ import (
 
 var (
 	ErrRepeatedRpc     = errors.New("sproto rpc: repeated rpc")
-	ErrUnknownProtocal = errors.New("sproto rpc: unknown protocal")
+	ErrUnknownProtocol = errors.New("sproto rpc: unknown protocol")
 	ErrUnknownSession  = errors.New("sproto rpc: unknown session")
 )
 
@@ -24,7 +24,7 @@ type rpcHeader struct {
 	Session *int `sproto:"integer,1,name=session"`
 }
 
-type Protocal struct {
+type Protocol struct {
 	Type     int
 	Name     string
 	Request  reflect.Type
@@ -32,7 +32,7 @@ type Protocal struct {
 }
 
 type Rpc struct {
-	protocals    []*Protocal
+	protocols    []*Protocol
 	idMap        map[int]int
 	nameMap      map[string]int
 	sessionMutex sync.Mutex
@@ -63,14 +63,14 @@ func (rpc *Rpc) Dispatch(packed []byte) (mode RpcMode, name string, session int,
 		return
 	}
 
-	var proto *Protocal
+	var proto *Protocol
 	if header.Type != nil {
 		index, ok := rpc.idMap[*header.Type]
 		if !ok {
-			err = ErrUnknownProtocal
+			err = ErrUnknownProtocol
 			return
 		}
-		proto = rpc.protocals[index]
+		proto = rpc.protocols[index]
 		if proto.Request != nil {
 			sp = reflect.New(proto.Request.Elem()).Interface()
 			if _, err = Decode(unpacked[used:], sp); err != nil {
@@ -96,7 +96,7 @@ func (rpc *Rpc) Dispatch(packed []byte) (mode RpcMode, name string, session int,
 		}
 		delete(rpc.sessions, session)
 
-		proto = rpc.protocals[index]
+		proto = rpc.protocols[index]
 		if proto.Response != nil {
 			sp = reflect.New(proto.Response.Elem()).Interface()
 			if _, err = Decode(unpacked[used:], sp); err != nil {
@@ -112,12 +112,12 @@ func (rpc *Rpc) Dispatch(packed []byte) (mode RpcMode, name string, session int,
 func (rpc *Rpc) ResponseEncode(name string, session int, response interface{}) (data []byte, err error) {
 	index, ok := rpc.nameMap[name]
 	if !ok {
-		err = ErrUnknownProtocal
+		err = ErrUnknownProtocol
 		return
 	}
 
-	protocal := rpc.protocals[index]
-	if protocal.Response != nil {
+	protocol := rpc.protocols[index]
+	if protocol.Response != nil {
 		if data, err = Encode(response); err != nil {
 			return
 		}
@@ -132,19 +132,19 @@ func (rpc *Rpc) ResponseEncode(name string, session int, response interface{}) (
 func (rpc *Rpc) RequestEncode(name string, session int, req interface{}) (data []byte, err error) {
 	index, ok := rpc.nameMap[name]
 	if !ok {
-		err = ErrUnknownProtocal
+		err = ErrUnknownProtocol
 		return
 	}
 
-	protocal := rpc.protocals[index]
-	if protocal.Request != nil {
+	protocol := rpc.protocols[index]
+	if protocol.Request != nil {
 		if data, err = Encode(req); err != nil {
 			return
 		}
 	}
 
 	header, _ := Encode(&rpcHeader{
-		Type:    &protocal.Type,
+		Type:    &protocol.Type,
 		Session: &session,
 	})
 
@@ -157,27 +157,27 @@ func (rpc *Rpc) RequestEncode(name string, session int, req interface{}) (data [
 	return
 }
 
-func NewRpc(protocals []*Protocal) (*Rpc, error) {
+func NewRpc(protocols []*Protocol) (*Rpc, error) {
 	idMap := make(map[int]int)
 	nameMap := make(map[string]int)
-	for i, protocal := range protocals {
-		if _, err := getRpcSprotoType(protocal.Request); err != nil {
+	for i, protocol := range protocols {
+		if _, err := getRpcSprotoType(protocol.Request); err != nil {
 			return nil, err
 		}
-		if _, err := getRpcSprotoType(protocal.Response); err != nil {
+		if _, err := getRpcSprotoType(protocol.Response); err != nil {
 			return nil, err
 		}
-		if _, ok := idMap[protocal.Type]; ok {
+		if _, ok := idMap[protocol.Type]; ok {
 			return nil, ErrRepeatedRpc
 		}
-		if _, ok := nameMap[protocal.Name]; ok {
+		if _, ok := nameMap[protocol.Name]; ok {
 			return nil, ErrRepeatedRpc
 		}
-		idMap[protocal.Type] = i
-		nameMap[protocal.Name] = i
+		idMap[protocol.Type] = i
+		nameMap[protocol.Name] = i
 	}
 	rpc := &Rpc{
-		protocals: protocals,
+		protocols: protocols,
 		idMap:     idMap,
 		nameMap:   nameMap,
 		sessions:  make(map[int]int),

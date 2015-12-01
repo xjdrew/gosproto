@@ -21,19 +21,19 @@ type FooResponse struct {
 	Ok *bool `sproto:"boolean,0,name=ok"`
 }
 
-var protocals []*sproto.Protocal = []*sproto.Protocal{
-	&sproto.Protocal{
+var protocols []*sproto.Protocol = []*sproto.Protocol{
+	&sproto.Protocol{
 		Type:     1,
 		Name:     "foobar",
 		Request:  reflect.TypeOf(&FoobarRequest{}),
 		Response: reflect.TypeOf(&FoobarResponse{}),
 	},
-	&sproto.Protocal{
+	&sproto.Protocol{
 		Type:     2,
 		Name:     "foo",
 		Response: reflect.TypeOf(&FooResponse{}),
 	},
-	&sproto.Protocal{
+	&sproto.Protocol{
 		Type: 3,
 		Name: "bar",
 	},
@@ -56,7 +56,7 @@ func checkRequest(rpc *sproto.Rpc, name string, session int, sp interface{}) (in
 }
 
 func TestRpcRequest(t *testing.T) {
-	rpc, err := sproto.NewRpc(protocals)
+	rpc, err := sproto.NewRpc(protocols)
 	if err != nil {
 		t.Fatalf("new rpc failed with error:%s", err)
 	}
@@ -92,7 +92,7 @@ func TestRpcRequest(t *testing.T) {
 }
 
 func TestRpcResponse(t *testing.T) {
-	rpc, err := sproto.NewRpc(protocals)
+	rpc, err := sproto.NewRpc(protocols)
 	if err != nil {
 		t.Fatalf("new rpc failed with error:%s", err)
 	}
