@@ -13,6 +13,10 @@ array of integer | []int8, []uint8, []int16, []uint16, []int32, []uint32, []int6
 array of boolean | []bool
 array of object  | []\*struct
 
+# schema
+You can define go struct corresponding to sproto schema directly as examples in all test cases.
+Or use [sprotodump](https://github.com/lvzixun/sprotodump) to change sproto schema to go file.
+
 # test
 ```
 go test github.com/xjdrew/gosproto
