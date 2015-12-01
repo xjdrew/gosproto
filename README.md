@@ -17,3 +17,14 @@ array of object  | []\*struct
 ```
 go test github.com/xjdrew/gosproto
 ```
+
+# benchmark
+```
+$ go test -bench . github.com/xjdrew/gosproto
+PASS
+BenchmarkEncode-4         300000      4122 ns/op
+BenchmarkDecode-4         300000      5417 ns/op
+BenchmarkEncodePacked-4122  300000      4712 ns/op
+BenchmarkDecodePacked-4712  200000      6267 ns/op
+ok      github.com/xjdrew/gosproto5.752s
+```

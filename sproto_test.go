@@ -9,11 +9,27 @@ import (
 	"github.com/xjdrew/gosproto"
 )
 
+type PhoneNumber struct {
+	Number *string `sproto:"string,0,name=number"`
+	Type   *int    `sproto:"integer,1,name=type"`
+}
+
 type Person struct {
-	Name     *string   `sproto:"string,0,name=name"`
-	Age      *int      `sproto:"integer,1,name=age"`
-	Marital  *bool     `sproto:"boolean,2,name=marital"`
-	Children []*Person `sproto:"struct,3,array,name=children"`
+	Name  *string        `sproto:"string,0,name=name"`
+	Id    *int           `sproto:"integer,1,name=id"`
+	Email *string        `sproto:"string,2,name=email"`
+	Phone []*PhoneNumber `sproto:"struct,3,array,name=phone"`
+}
+
+type AddressBook struct {
+	Person []*Person `sproto:"struct,0,array,name=person"`
+}
+
+type Human struct {
+	Name     *string  `sproto:"string,0,name=name"`
+	Age      *int     `sproto:"integer,1,name=age"`
+	Marital  *bool    `sproto:"boolean,2,name=marital"`
+	Children []*Human `sproto:"struct,3,array,name=children"`
 }
 
 type Data struct {
@@ -31,10 +47,57 @@ type TestCase struct {
 	Data   []byte
 }
 
+var abData []byte = []byte{
+	1, 0, 0, 0, 122, 0, 0, 0, 68, 0, 0, 0, 4, 0, 0, 0, 34, 78, 1, 0,
+	0, 0, 5, 0, 0, 0, 65, 108, 105, 99, 101, 45, 0, 0, 0, 19, 0, 0, 0,
+	2, 0, 0, 0, 4, 0, 9, 0, 0, 0, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+	18, 0, 0, 0, 2, 0, 0, 0, 6, 0, 8, 0, 0, 0, 56, 55, 54, 53, 52, 51,
+	50, 49, 46, 0, 0, 0, 4, 0, 0, 0, 66, 156, 1, 0, 0, 0, 3, 0, 0, 0,
+	66, 111, 98, 25, 0, 0, 0, 21, 0, 0, 0, 2, 0, 0, 0, 8, 0, 11, 0, 0,
+	0, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
+}
+
+var abDataPacked []byte = []byte{
+	17, 1, 122, 17, 68, 4, 71, 34, 78, 1, 5, 252, 65, 108, 105, 99, 101,
+	45, 136, 19, 2, 40, 4, 9, 254, 49, 50, 51, 52, 53, 54, 55, 71, 56, 57,
+	18, 2, 20, 6, 8, 255, 0, 56, 55, 54, 53, 52, 51, 50, 49, 17, 46, 4, 71,
+	66, 156, 1, 3, 60, 66, 111, 98, 25, 34, 21, 2, 138, 8, 11, 48, 255, 0,
+	49, 50, 51, 52, 53, 54, 55, 56, 3, 57, 48,
+}
+
+var ab AddressBook = AddressBook{
+	Person: []*Person{
+		&Person{
+			Name: sproto.String("Alice"),
+			Id:   sproto.Int(10000),
+			Phone: []*PhoneNumber{
+				&PhoneNumber{
+					Number: sproto.String("123456789"),
+					Type:   sproto.Int(1),
+				},
+				&PhoneNumber{
+					Number: sproto.String("87654321"),
+					Type:   sproto.Int(2),
+				},
+			},
+		},
+		&Person{
+			Name: sproto.String("Bob"),
+			Id:   sproto.Int(20000),
+			Phone: []*PhoneNumber{
+				&PhoneNumber{
+					Number: sproto.String("01234567890"),
+					Type:   sproto.Int(3),
+				},
+			},
+		},
+	},
+}
+
 var testCases []*TestCase = []*TestCase{
 	&TestCase{
 		Name: "SimpleStruct",
-		Struct: &Person{
+		Struct: &Human{
 			Name:    sproto.String("Alice"),
 			Age:     sproto.Int(13),
 			Marital: sproto.Bool(false),
@@ -50,15 +113,15 @@ var testCases []*TestCase = []*TestCase{
 	},
 	&TestCase{
 		Name: "StructArray",
-		Struct: &Person{
+		Struct: &Human{
 			Name: sproto.String("Bob"),
 			Age:  sproto.Int(40),
-			Children: []*Person{
-				&Person{
+			Children: []*Human{
+				&Human{
 					Name: sproto.String("Alice"),
 					Age:  sproto.Int(13),
 				},
-				&Person{
+				&Human{
 					Name: sproto.String("Carol"),
 					Age:  sproto.Int(5),
 				},
@@ -196,6 +259,11 @@ var testCases []*TestCase = []*TestCase{
 			0x00, 0x1C, 0xF4, 0xAB, 0xFD, 0xFF, 0xFF, 0xFF, //(-10000000000, 64bit integer)
 		},
 	},
+	&TestCase{
+		Name:   "AddressBook",
+		Struct: &ab,
+		Data:   abData,
+	},
 }
 
 func TestEncode(t *testing.T) {
@@ -233,5 +301,36 @@ func TestDecode(t *testing.T) {
 			t.Log("expected:", tc.Data)
 			t.Fatalf("test case %s failed", tc.Name)
 		}
+	}
+}
+
+func BenchmarkEncode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		sproto.Encode(&ab)
+	}
+}
+
+func BenchmarkDecode(b *testing.B) {
+	var ab AddressBook
+	for i := 0; i < b.N; i++ {
+		sproto.Decode(abData, &ab)
+	}
+}
+
+func BenchmarkEncodePacked(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		data, _ := sproto.Encode(&ab)
+		sproto.Pack(data)
+	}
+}
+
+func BenchmarkDecodePacked(b *testing.B) {
+	var ab AddressBook
+	for i := 0; i < b.N; i++ {
+		unpacked, err := sproto.Unpack(abDataPacked)
+		if err != nil {
+			b.Fatal(err)
+		}
+		sproto.Decode(unpacked, &ab)
 	}
 }
