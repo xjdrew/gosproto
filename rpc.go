@@ -25,16 +25,18 @@ type rpcHeader struct {
 }
 
 type Protocol struct {
-	Type     int
-	Name     string
-	Request  reflect.Type
-	Response reflect.Type
+	Type       int
+	Name       string
+	MethodName string
+	Request    reflect.Type
+	Response   reflect.Type
 }
 
 type Rpc struct {
 	protocols    []*Protocol
 	idMap        map[int]int
 	nameMap      map[string]int
+	methodMap    map[string]int
 	sessionMutex sync.Mutex
 	sessions     map[int]int
 }
@@ -157,9 +159,26 @@ func (rpc *Rpc) RequestEncode(name string, session int, req interface{}) (data [
 	return
 }
 
+// get protocol by method name
+func (rpc *Rpc) GetProtocolByMethod(method string) *Protocol {
+	if index, ok := rpc.methodMap[method]; ok {
+		return rpc.protocols[index]
+	}
+	return nil
+}
+
+// get protocol by name
+func (rpc *Rpc) GetProtocolByName(name string) *Protocol {
+	if index, ok := rpc.nameMap[name]; ok {
+		return rpc.protocols[index]
+	}
+	return nil
+}
+
 func NewRpc(protocols []*Protocol) (*Rpc, error) {
 	idMap := make(map[int]int)
 	nameMap := make(map[string]int)
+	methodMap := make(map[string]int)
 	for i, protocol := range protocols {
 		if _, err := getRpcSprotoType(protocol.Request); err != nil {
 			return nil, err
@@ -173,13 +192,18 @@ func NewRpc(protocols []*Protocol) (*Rpc, error) {
 		if _, ok := nameMap[protocol.Name]; ok {
 			return nil, ErrRepeatedRpc
 		}
+		if _, ok := methodMap[protocol.MethodName]; ok {
+			return nil, ErrRepeatedRpc
+		}
 		idMap[protocol.Type] = i
 		nameMap[protocol.Name] = i
+		methodMap[protocol.MethodName] = i
 	}
 	rpc := &Rpc{
 		protocols: protocols,
 		idMap:     idMap,
 		nameMap:   nameMap,
+		methodMap: methodMap,
 		sessions:  make(map[int]int),
 	}
 	return rpc, nil

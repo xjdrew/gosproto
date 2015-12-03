@@ -23,19 +23,22 @@ type FooResponse struct {
 
 var protocols []*sproto.Protocol = []*sproto.Protocol{
 	&sproto.Protocol{
-		Type:     1,
-		Name:     "foobar",
-		Request:  reflect.TypeOf(&FoobarRequest{}),
-		Response: reflect.TypeOf(&FoobarResponse{}),
+		Type:       1,
+		Name:       "foobar",
+		MethodName: "Foobar",
+		Request:    reflect.TypeOf(&FoobarRequest{}),
+		Response:   reflect.TypeOf(&FoobarResponse{}),
 	},
 	&sproto.Protocol{
-		Type:     2,
-		Name:     "foo",
-		Response: reflect.TypeOf(&FooResponse{}),
+		Type:       2,
+		Name:       "foo",
+		MethodName: "Foo",
+		Response:   reflect.TypeOf(&FooResponse{}),
 	},
 	&sproto.Protocol{
-		Type: 3,
-		Name: "bar",
+		Type:       3,
+		Name:       "bar",
+		MethodName: "Bar",
 	},
 }
 
