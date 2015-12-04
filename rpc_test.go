@@ -14,7 +14,8 @@ type FoobarRequest struct {
 }
 
 type FoobarResponse struct {
-	Ok *bool `sproto:"boolean,0,name=ok"`
+	Ok   *bool   `sproto:"boolean,0,name=ok"`
+	What *string `sproto:"string,1,name=what"`
 }
 
 type FooResponse struct {
@@ -24,25 +25,25 @@ type FooResponse struct {
 var protocols []*sproto.Protocol = []*sproto.Protocol{
 	&sproto.Protocol{
 		Type:       1,
-		Name:       "foobar",
-		MethodName: "Foobar",
+		Name:       "test.foobar",
+		MethodName: "Test.Foobar",
 		Request:    reflect.TypeOf(&FoobarRequest{}),
 		Response:   reflect.TypeOf(&FoobarResponse{}),
 	},
 	&sproto.Protocol{
 		Type:       2,
-		Name:       "foo",
-		MethodName: "Foo",
+		Name:       "test.foo",
+		MethodName: "Test.Foo",
 		Response:   reflect.TypeOf(&FooResponse{}),
 	},
 	&sproto.Protocol{
 		Type:       3,
-		Name:       "bar",
-		MethodName: "Bar",
+		Name:       "test.bar",
+		MethodName: "Test.Bar",
 	},
 }
 
-func checkRequest(rpc *sproto.Rpc, name string, session int, sp interface{}) (interface{}, error) {
+func checkRequest(rpc *sproto.Rpc, name string, session int32, sp interface{}) (interface{}, error) {
 	chunk, err := rpc.RequestEncode(name, session, sp)
 	if err != nil {
 		return nil, err
@@ -66,7 +67,7 @@ func TestRpcRequest(t *testing.T) {
 
 	// request & dispatch request
 	what := "hello"
-	sp, err := checkRequest(rpc, "foobar", 1, &FoobarRequest{What: &what})
+	sp, err := checkRequest(rpc, "test.foobar", 1, &FoobarRequest{What: &what})
 	if err != nil {
 		t.Fatalf("check request failed:%s", err)
 	}
@@ -76,7 +77,7 @@ func TestRpcRequest(t *testing.T) {
 	}
 
 	// nil request
-	sp, err = checkRequest(rpc, "foo", 2, nil)
+	sp, err = checkRequest(rpc, "test.foo", 2, nil)
 	if err != nil {
 		t.Fatalf("check request failed:%s", err)
 	}
@@ -85,7 +86,7 @@ func TestRpcRequest(t *testing.T) {
 	}
 
 	// nil request
-	sp, err = checkRequest(rpc, "bar", 3, nil)
+	sp, err = checkRequest(rpc, "test.bar", 0, nil)
 	if err != nil {
 		t.Fatalf("check request failed:%s", err)
 	}
@@ -102,13 +103,13 @@ func TestRpcResponse(t *testing.T) {
 
 	// request & dispatch request
 	what := "hello"
-	_, err = rpc.RequestEncode("foobar", 18, &FoobarRequest{What: &what})
+	_, err = rpc.RequestEncode("test.foobar", 18, &FoobarRequest{What: &what})
 	if err != nil {
 		t.Fatalf("request encode failed:%s", err)
 	}
 
 	// check response
-	chunk, err := rpc.ResponseEncode("foobar", 18, &FoobarResponse{Ok: sproto.Bool(true)})
+	chunk, err := rpc.ResponseEncode("test.foobar", 18, &FoobarResponse{Ok: sproto.Bool(true)})
 	if err != nil {
 		t.Fatalf("response encode failed:%s", err)
 	}
@@ -117,34 +118,11 @@ func TestRpcResponse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dispatch failed:%s", err)
 	}
-	if mode != sproto.RpcResponseMode || name != "foobar" || session != 18 {
+	if mode != sproto.RpcResponseMode || name != "test.foobar" || session != 18 {
 		t.Fatalf("dispatch failed:unmatch meta info")
 	}
 	response := sp.(*FoobarResponse)
 	if !*response.Ok {
-		t.Fatalf("dispatch failed:unmatch data")
-	}
-
-	// nil response
-	_, err = rpc.RequestEncode("bar", 18, nil)
-	if err != nil {
-		t.Fatalf("request encode failed:%s", err)
-	}
-
-	// check response
-	chunk, err = rpc.ResponseEncode("bar", 18, nil)
-	if err != nil {
-		t.Fatalf("response encode failed:%s", err)
-	}
-
-	mode, name, session, sp, err = rpc.Dispatch(chunk)
-	if err != nil {
-		t.Fatalf("dispatch failed:%s", err)
-	}
-	if mode != sproto.RpcResponseMode || name != "bar" || session != 18 {
-		t.Fatalf("dispatch failed:unmatch meta info")
-	}
-	if sp != nil {
 		t.Fatalf("dispatch failed:unmatch data")
 	}
 }

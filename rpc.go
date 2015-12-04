@@ -2,6 +2,7 @@ package sproto
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 )
@@ -20,25 +21,65 @@ const (
 )
 
 type rpcHeader struct {
-	Type    *int `sproto:"integer,0,name=type"`
-	Session *int `sproto:"integer,1,name=session"`
+	Type    *int32 `sproto:"integer,0,name=type"`
+	Session *int32 `sproto:"integer,1,name=session"`
 }
 
 type Protocol struct {
-	Type       int
+	Type       int32
 	Name       string
 	MethodName string
 	Request    reflect.Type
 	Response   reflect.Type
 }
 
+func (p *Protocol) HasRequest() bool {
+	return p.Request != nil
+}
+
+func (p *Protocol) HasResponse() bool {
+	return p.Response != nil
+}
+
+// func (rcvr Reciver) MethodName(req protocol.Request, response protocol.Response)
+func (p *Protocol) MatchMethod(method reflect.Method) error {
+	mtyp := method.Type
+
+	// default args: rcvr
+	numIn := 1
+	if p.Request != nil {
+		numIn += 1
+	}
+
+	if p.Response != nil {
+		numIn += 1
+	}
+
+	if mtyp.NumIn() != numIn || mtyp.NumOut() != 0 {
+		return fmt.Errorf("sproto: method %s should have %d arguments and 0 return values", p.MethodName, numIn)
+	}
+
+	if p.Request != nil {
+		if mtyp.In(1) != p.Request {
+			return fmt.Errorf("sproto: method %s arg%d should be %s", p.MethodName, 1, p.Request.String())
+		}
+	}
+
+	if p.Response != nil {
+		if mtyp.In(numIn-1) != p.Response {
+			return fmt.Errorf("sproto: method %s arg%d should be %s", p.MethodName, 2, p.Response.String())
+		}
+	}
+	return nil
+}
+
 type Rpc struct {
 	protocols    []*Protocol
-	idMap        map[int]int
+	idMap        map[int32]int
 	nameMap      map[string]int
 	methodMap    map[string]int
 	sessionMutex sync.Mutex
-	sessions     map[int]int
+	sessions     map[int32]int
 }
 
 func getRpcSprotoType(typ reflect.Type) (*SprotoType, error) {
@@ -53,7 +94,7 @@ func getRpcSprotoType(typ reflect.Type) (*SprotoType, error) {
 	return GetSprotoType(typ.Elem())
 }
 
-func (rpc *Rpc) Dispatch(packed []byte) (mode RpcMode, name string, session int, sp interface{}, err error) {
+func (rpc *Rpc) Dispatch(packed []byte) (mode RpcMode, name string, session int32, sp interface{}, err error) {
 	var unpacked []byte
 	if unpacked, err = Unpack(packed); err != nil {
 		return
@@ -111,7 +152,7 @@ func (rpc *Rpc) Dispatch(packed []byte) (mode RpcMode, name string, session int,
 	return
 }
 
-func (rpc *Rpc) ResponseEncode(name string, session int, response interface{}) (data []byte, err error) {
+func (rpc *Rpc) ResponseEncode(name string, session int32, response interface{}) (data []byte, err error) {
 	index, ok := rpc.nameMap[name]
 	if !ok {
 		err = ErrUnknownProtocol
@@ -131,7 +172,7 @@ func (rpc *Rpc) ResponseEncode(name string, session int, response interface{}) (
 }
 
 // session > 0: need response
-func (rpc *Rpc) RequestEncode(name string, session int, req interface{}) (data []byte, err error) {
+func (rpc *Rpc) RequestEncode(name string, session int32, req interface{}) (data []byte, err error) {
 	index, ok := rpc.nameMap[name]
 	if !ok {
 		err = ErrUnknownProtocol
@@ -145,17 +186,23 @@ func (rpc *Rpc) RequestEncode(name string, session int, req interface{}) (data [
 		}
 	}
 
-	header, _ := Encode(&rpcHeader{
-		Type:    &protocol.Type,
-		Session: &session,
-	})
+	header := &rpcHeader{
+		Type: &protocol.Type,
+	}
 
-	if session > 0 {
+	if protocol.HasResponse() {
 		rpc.sessionMutex.Lock()
 		defer rpc.sessionMutex.Unlock()
+		if _, ok := rpc.sessions[session]; ok {
+			err = fmt.Errorf("sproto: repeated session:%d", session)
+			return
+		}
+		header.Session = &session
 		rpc.sessions[session] = index
 	}
-	data = Pack(Append(header, data))
+
+	chunk, _ := Encode(header)
+	data = Pack(Append(chunk, data))
 	return
 }
 
@@ -176,7 +223,7 @@ func (rpc *Rpc) GetProtocolByName(name string) *Protocol {
 }
 
 func NewRpc(protocols []*Protocol) (*Rpc, error) {
-	idMap := make(map[int]int)
+	idMap := make(map[int32]int)
 	nameMap := make(map[string]int)
 	methodMap := make(map[string]int)
 	for i, protocol := range protocols {
@@ -204,7 +251,7 @@ func NewRpc(protocols []*Protocol) (*Rpc, error) {
 		idMap:     idMap,
 		nameMap:   nameMap,
 		methodMap: methodMap,
-		sessions:  make(map[int]int),
+		sessions:  make(map[int32]int),
 	}
 	return rpc, nil
 }

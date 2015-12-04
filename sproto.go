@@ -8,7 +8,7 @@ var (
 	ErrNonPtr    = errors.New("sproto: called with Non-Ptr type")
 	ErrNonStruct = errors.New("sproto: Encode called with Non-Ptr")
 	ErrNil       = errors.New("sproto: Encode called with nil")
-	ErrTooShort  = errors.New("sproto: Decode data is too short")
+	ErrDecode    = errors.New("sproto: Decode msg failed")
 	ErrUnpack    = errors.New("sproto: Unpack data failed")
 )
 

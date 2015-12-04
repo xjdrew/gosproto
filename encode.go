@@ -11,6 +11,7 @@ const (
 	MinInt32         = -0x80000000
 )
 
+// little endian
 // put int into []byte
 func writeUint16(buf []byte, v uint16) {
 	buf[0] = uint8(v & 0xff)

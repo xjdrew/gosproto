@@ -13,12 +13,12 @@ type Tag struct {
 
 func readChunk(chunk []byte) (int, []byte, error) {
 	if len(chunk) < 4 {
-		return 0, nil, ErrTooShort
+		return 0, nil, ErrDecode
 	}
 	sz := int(readUint32(chunk))
 	expected := 4 + sz
 	if len(chunk) < expected {
-		return 0, nil, ErrTooShort
+		return 0, nil, ErrDecode
 	}
 	return expected, chunk[4:expected], nil
 }
@@ -117,7 +117,7 @@ func decodeBoolSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value)
 func decodeIntSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
 	dataLen := len(data)
 	if dataLen < 1 {
-		return ErrTooShort
+		return ErrDecode
 	}
 	intLen := int(data[0])
 	if (dataLen-1)%intLen != 0 {
@@ -200,12 +200,12 @@ func decodeStructSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Valu
 
 func decodeHeader(chunk []byte) (int, []Tag, error) {
 	if len(chunk) < 2 {
-		return 0, nil, ErrTooShort
+		return 0, nil, ErrDecode
 	}
 	fn := int(readUint16(chunk))
 	expected := 2 + fn*2
 	if len(chunk) < expected {
-		return 0, nil, ErrTooShort
+		return 0, nil, ErrDecode
 	}
 	tags := make([]Tag, fn)
 	n := 0
