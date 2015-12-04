@@ -1,0 +1,8 @@
+ping 1 {
+    request {
+        ping 0: string
+    }
+    response {
+        pong 0: string
+    }
+}
