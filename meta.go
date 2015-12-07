@@ -224,8 +224,9 @@ func GetSprotoType(t reflect.Type) (*SprotoType, error) {
 		return nil, fmt.Errorf("sproto: type must have kind struct")
 	}
 	mutex.Lock()
-	defer mutex.Unlock()
-	return getSprotoTypeLocked(t)
+	sp, err := getSprotoTypeLocked(t)
+	mutex.Unlock()
+	return sp, err
 }
 
 func getSprotoTypeLocked(t reflect.Type) (*SprotoType, error) {

@@ -7,6 +7,9 @@ import (
 
 	"github.com/xjdrew/gosproto"
 	"github.com/xjdrew/gosproto/examples/sproto_echo"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 type Echo int
@@ -35,6 +38,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	go func() {
+		log.Println(http.ListenAndServe(":6060", nil))
+	}()
 
 	for {
 		conn, err := ln.Accept()

@@ -61,9 +61,11 @@ func (call *Call) done() {
 
 type Service struct {
 	rpc          *Rpc
-	readMutex    sync.Mutex
+	readMutex    sync.Mutex // gates read one at a time
+	writeMutex   sync.Mutex // gates write one at a time
 	rw           io.ReadWriter
-	rdbuf        []byte
+	rdbuf        []byte // read buffer
+	wrbuf        []byte // write buffer
 	session      int32
 	methodMutex  sync.Mutex
 	methods      map[string]*Method
@@ -153,20 +155,23 @@ func (s *Service) Register(receiver interface{}) error {
 }
 
 func (s *Service) writePacket(msg []byte) error {
+	s.writeMutex.Lock()
+	defer s.writeMutex.Unlock()
+
 	sz := len(msg)
 	if sz > MSG_MAX_LEN {
 		return fmt.Errorf("sproto: message size(%d) should be less than %d", sz, MSG_MAX_LEN)
 	}
-	buffer := make([]byte, sz+2)
-	writeUint16(buffer, uint16(sz))
-	copy(buffer[2:], msg)
-	_, err := s.rw.Write(buffer)
+	writeUint16(s.wrbuf, uint16(sz))
+	copy(s.wrbuf[2:], msg)
+	_, err := s.rw.Write(s.wrbuf[:sz+2])
 	return err
 }
 
 func (s *Service) readPacket() (buf []byte, err error) {
 	s.readMutex.Lock()
 	defer s.readMutex.Unlock()
+
 	var sz uint16
 	if err = binary.Read(s.rw, binary.LittleEndian, &sz); err != nil {
 		return
@@ -303,6 +308,7 @@ func NewService(rw io.ReadWriter, protocols []*Protocol) (*Service, error) {
 		rpc:       rpc,
 		rw:        rw,
 		rdbuf:     make([]byte, MSG_MAX_LEN),
+		wrbuf:     make([]byte, MSG_MAX_LEN+2),
 		methods:   make(map[string]*Method),
 		sessions:  make(map[int32]*Call),
 		onUnknown: defaultOnUnknownPacket,

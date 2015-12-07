@@ -270,9 +270,6 @@ func Encode(sp interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if v.IsNil() {
-		return nil, ErrNil
-	}
 
 	st, err := GetSprotoType(t.Elem())
 	if err != nil {
