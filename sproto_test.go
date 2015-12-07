@@ -319,18 +319,18 @@ func BenchmarkDecode(b *testing.B) {
 
 func BenchmarkEncodePacked(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		data, _ := sproto.Encode(&ab)
-		sproto.Pack(data)
+		_, err := sproto.EncodePacked(&ab)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
 func BenchmarkDecodePacked(b *testing.B) {
 	var ab AddressBook
 	for i := 0; i < b.N; i++ {
-		unpacked, err := sproto.Unpack(abDataPacked)
-		if err != nil {
+		if err := sproto.DecodePacked(abDataPacked, &ab); err != nil {
 			b.Fatal(err)
 		}
-		sproto.Decode(unpacked, &ab)
 	}
 }

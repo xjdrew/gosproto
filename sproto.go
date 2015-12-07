@@ -72,3 +72,22 @@ func Int(v int) *int {
 func Uint(v uint) *uint {
 	return &v
 }
+
+// encode && pack
+func EncodePacked(sp interface{}) ([]byte, error) {
+	unpacked, err := Encode(sp)
+	if err != nil {
+		return nil, err
+	}
+	return Pack(unpacked), nil
+}
+
+// unpack && decode
+func DecodePacked(data []byte, sp interface{}) error {
+	unpacked, err := Unpack(data)
+	if err != nil {
+		return err
+	}
+	_, err = Decode(unpacked, sp)
+	return err
+}
