@@ -154,7 +154,7 @@ func (s *Service) Register(receiver interface{}) error {
 	return nil
 }
 
-func (s *Service) writePacket(msg []byte) error {
+func (s *Service) WritePacket(msg []byte) error {
 	s.writeMutex.Lock()
 	defer s.writeMutex.Unlock()
 
@@ -215,7 +215,7 @@ func (s *Service) DispatchOnce() error {
 			if err != nil {
 				return err
 			}
-			return s.writePacket(data)
+			return s.WritePacket(data)
 		}
 	} else {
 		call := s.grabSession(session)
@@ -272,7 +272,7 @@ func (s *Service) Go(name string, req interface{}, done chan *Call) (call *Call,
 		Done:     done,
 	}
 	s.setSession(session, call)
-	s.writePacket(data)
+	s.WritePacket(data)
 	return
 }
 
@@ -286,13 +286,18 @@ func (s *Service) Call(name string, req interface{}) (interface{}, error) {
 	return call.Resp, call.Err
 }
 
+// encode notify packet
+func (s *Service) Encode(name string, req interface{}) ([]byte, error) {
+	return s.rpc.RequestEncode(name, 0, req)
+}
+
 // invoke a service which has not a reply
 func (s *Service) Invoke(name string, req interface{}) error {
 	data, err := s.rpc.RequestEncode(name, 0, req)
 	if err != nil {
 		return err
 	}
-	return s.writePacket(data)
+	return s.WritePacket(data)
 }
 
 func (s *Service) SetOnUnknownPacket(onUnknown OnUnknownPacket) {
