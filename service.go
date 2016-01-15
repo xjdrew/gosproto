@@ -162,7 +162,7 @@ func (s *Service) WritePacket(msg []byte) error {
 	if sz > MSG_MAX_LEN {
 		return fmt.Errorf("sproto: message size(%d) should be less than %d", sz, MSG_MAX_LEN)
 	}
-	writeUint16(s.wrbuf, uint16(sz))
+	binary.BigEndian.PutUint16(s.wrbuf[:2], uint16(sz))
 	copy(s.wrbuf[2:], msg)
 	_, err := s.rw.Write(s.wrbuf[:sz+2])
 	return err
@@ -173,7 +173,7 @@ func (s *Service) readPacket() (buf []byte, err error) {
 	defer s.readMutex.Unlock()
 
 	var sz uint16
-	if err = binary.Read(s.rw, binary.LittleEndian, &sz); err != nil {
+	if err = binary.Read(s.rw, binary.BigEndian, &sz); err != nil {
 		return
 	}
 
