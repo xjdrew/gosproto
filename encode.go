@@ -1,8 +1,6 @@
 package sproto
 
-import (
-	"reflect"
-)
+import "reflect"
 
 const (
 	EncodeBufferSize = 4096
@@ -55,7 +53,7 @@ func headerEncodeBool(sf *SprotoField, v reflect.Value) (uint16, bool) {
 }
 
 func headerEncodeInt(sf *SprotoField, v reflect.Value) (uint16, bool) {
-	if v.IsNil() {
+	if !v.IsValid() {
 		return 0, true
 	}
 
@@ -243,7 +241,12 @@ func encodeMessage(st *SprotoType, v reflect.Value) []byte {
 			if nextTag < 0 {
 				continue
 			}
-
+			if v1.Kind() != reflect.Ptr &&
+				v1.Kind() != reflect.Slice &&
+				v1.Kind() != reflect.Array {
+				// 替内部处理取地址
+				v1 = v1.Addr()
+			}
 			if header, isNil := sf.headerEnc(sf, v1); !isNil {
 				if skip := skipTag(tag, nextTag); skip > 0 {
 					headers[offset] = skip
