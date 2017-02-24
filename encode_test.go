@@ -79,6 +79,7 @@ func TestValueEncodeEqualToPtr(t *testing.T) {
 
 // 新特性测试:预期valMsgData可以被相同的val结构体接收
 func TestValueDecode(t *testing.T) {
+	log.Debug("========================================")
 	Reset()
 	valMsgData, err := Encode(&valMSG)
 	if err != nil {

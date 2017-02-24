@@ -77,13 +77,24 @@ func decodeInt(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error
 			return fmt.Errorf("sproto: malformed integer data for field %s", sf.Name)
 		}
 	}
-	e := v.Type().Elem()
-	v.Addr().Elem().Set(reflect.New(e))
-	switch e.Kind() {
-	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
-		v.Elem().SetInt(int64(n))
-	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
-		v.Elem().SetUint(n)
+	if v.Type().Kind() == reflect.Ptr {
+		e := v.Type().Elem()
+		v.Addr().Elem().Set(reflect.New(e))
+		switch e.Kind() {
+		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
+			v.Elem().SetInt(int64(n))
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
+			v.Elem().SetUint(n)
+		}
+	} else {
+		// 初始化默认值
+		v.SetInt(0)
+		switch v.Kind() {
+		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
+			v.SetInt(int64(n))
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
+			v.SetUint(n)
+		}
 	}
 	return nil
 }
