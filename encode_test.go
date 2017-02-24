@@ -94,6 +94,12 @@ func TestValueDecode(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
+	// 预期结果应该保持一致
+	if !reflect.DeepEqual(valMSG, valMsg2) {
+		t.Error("ValMsg expect equal to ValMsg2")
+		return
+	}
 }
 
 // 新特性测试：包含部分等价nil的消息可以被正确接收并设置为默认值
