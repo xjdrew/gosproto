@@ -20,26 +20,27 @@ func TestPtrEncode(t *testing.T) {
 	if !reflect.DeepEqual(ptrMsg, ptrMsg2) {
 		t.Error("ptrMsg is not equal to ptrMsg2")
 	}
+}
 
+func TestPtrNilEncode(t *testing.T) {
 	// 测试对nil值的支持
 	Reset()
 	ptrMsg.Int = nil
 	ptrMsg.Bool = nil
 	ptrMsg.StructSlice = nil
 	ptrMsg.Struct = nil
-	ptrMsgData, err = Encode(&ptrMsg)
+	ptrMsgData, err := Encode(&ptrMsg)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
 	// 测试解包结果
-	ptrMsg2 = PtrMSG{}
+	ptrMsg2 := PtrMSG{}
 	Decode(ptrMsgData, &ptrMsg2)
 	if !reflect.DeepEqual(ptrMsg, ptrMsg2) {
 		t.Error("ptrMsg is not equal to ptrMsg2")
 	}
-
 }
 
 func TestValueEncode(t *testing.T) {
