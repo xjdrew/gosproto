@@ -131,7 +131,34 @@ func TestValueEncodeToPtr(t *testing.T) {
 
 // 新特性测试：包含部分等价nil的消息可以被正确接收并设置为默认值
 func TestValueDecodeNil(t *testing.T) {
+	// 测试对nil值的支持
+	Reset()
+	ptrMsg.Int = nil
+	ptrMsg.Bool = nil
+	ptrMsg.StructSlice = nil
+	ptrMsg.Struct = nil
+	ptrMsgData, err := Encode(&ptrMsg)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
+	// 测试Val对nil的接收
+	valMsg2 := ValMSG{Bool: true, Int: 1024}
+	_, err = Decode(ptrMsgData, &valMsg2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	// 测试默认值
+	if valMsg2.Bool != false {
+		t.Error("Expect Bool equal to false")
+		return
+	}
+	if valMsg2.Int != 0 {
+		t.Error("Expect Int equal to 0")
+		return
+	}
 }
 
 type PtrMSG struct {
