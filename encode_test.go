@@ -8,7 +8,7 @@ import (
 	"reflect"
 )
 
-// 不影响已有功能测试1
+// 不影响已有功能测试：Ptr结构可以被编码
 func TestPtrEncode(t *testing.T) {
 	Reset()
 	ptrMsgData, err := Encode(&ptrMsg)
@@ -25,7 +25,7 @@ func TestPtrEncode(t *testing.T) {
 	}
 }
 
-// 不影响已有功能测试2
+// 不影响已有功能测试：Ptr结构可以在包含nil的情况下被编码
 func TestPtrNilEncode(t *testing.T) {
 	// 测试对nil值的支持
 	Reset()
@@ -47,7 +47,7 @@ func TestPtrNilEncode(t *testing.T) {
 	}
 }
 
-// 新特性测试1
+// 新特性测试: 等价的Val结构和Ptr结构编码结果一致（不考虑ptr为nil）
 func TestValueEncodeEqualToPtr(t *testing.T) {
 	Reset()
 	valMsgData, err := Encode(&valMSG)
@@ -77,7 +77,7 @@ func TestValueEncodeEqualToPtr(t *testing.T) {
 	}
 }
 
-// 新特性测试2
+// 新特性测试:预期valMsgData可以被相同的val结构体接收
 func TestValueDecode(t *testing.T) {
 	Reset()
 	valMsgData, err := Encode(&valMSG)
@@ -93,6 +93,11 @@ func TestValueDecode(t *testing.T) {
 		t.Error(err)
 		return
 	}
+}
+
+// 新特性测试：包含部分等价nil的消息可以被正确接收并设置为默认值
+func TestValueDecodeNil(t *testing.T) {
+
 }
 
 type PtrMSG struct {
