@@ -57,7 +57,11 @@ func decodeBool(val *uint16, data []byte, sf *SprotoField, v reflect.Value) erro
 	if *val == 0 {
 		b = false
 	}
-	v.Addr().Elem().Set(reflect.ValueOf(&b))
+	if v.Kind() == reflect.Ptr {
+		v.Addr().Elem().Set(reflect.ValueOf(&b))
+	} else {
+		v.SetBool(b)
+	}
 	return nil
 }
 
