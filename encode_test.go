@@ -167,12 +167,30 @@ func TestOldAndNewEncode(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	// 新版本
 	newMsgData, err := Encode(&ptrMsg)
 	if err != nil {
 		t.Error(err)
 	}
 	if !reflect.DeepEqual(oldMsgData, newMsgData) {
 		t.Error("新方案与旧方案的编码结果不一致。")
+	}
+
+	Reset()
+	// 云风的版本
+	ptrMsg.Int = nil
+	ptrMsg.String = nil
+	oldMsgData, err = sproto.Encode(&ptrMsg)
+	if err != nil {
+		t.Error(err)
+	}
+	// 新版本
+	newMsgData, err = Encode(&ptrMsg)
+	if err != nil {
+		t.Error(err)
+	}
+	if !reflect.DeepEqual(oldMsgData, newMsgData) {
+		t.Error("包含nil的情况下新方案与旧方案的编码结果不一致。")
 	}
 }
 
