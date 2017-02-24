@@ -181,29 +181,16 @@ func decodeStringSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Valu
 }
 
 func decodeStruct(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
-	switch v.Kind() {
-	case reflect.Ptr:
-		// v1: pointer to struct
-		v1 := reflect.New(v.Type().Elem())
-		used, err := decodeMessage(data, sf.st, v1)
-		if err != nil {
-			return err
-		}
-		if used != len(data) {
-			return fmt.Errorf("sproto: malformed struct data for field %s", sf.Name)
-		}
-		v.Addr().Elem().Set(v1)
-	case reflect.Struct:
-		v1 := reflect.New(v.Type())
-		used, err := decodeMessage(data, sf.st, v1)
-		if err != nil {
-			return err
-		}
-		if used != len(data) {
-			return fmt.Errorf("sproto: malformed struct data for field %s", sf.Name)
-		}
-		v.Set(v1.Elem())
+	// v1: pointer to struct
+	v1 := reflect.New(v.Type().Elem())
+	used, err := decodeMessage(data, sf.st, v1)
+	if err != nil {
+		return err
 	}
+	if used != len(data) {
+		return fmt.Errorf("sproto: malformed struct data for field %s", sf.Name)
+	}
+	v.Addr().Elem().Set(v1)
 	return nil
 }
 

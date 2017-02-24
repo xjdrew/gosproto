@@ -261,7 +261,8 @@ func encodeMessage(st *SprotoType, v reflect.Value) []byte {
 			}
 			if v1.Kind() != reflect.Ptr &&
 				v1.Kind() != reflect.Slice &&
-				v1.Kind() != reflect.Array {
+				v1.Kind() != reflect.Array &&
+				v1.Kind() != reflect.Struct {
 				// 替内部处理取地址
 				v1 = v1.Addr()
 			}

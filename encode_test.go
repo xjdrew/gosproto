@@ -265,7 +265,7 @@ func Reset() {
 		BoolSlice:   []bool{true, true, false, true, false},
 		IntSlice:    []int{123, 321, 1234567},
 		StringSlice: []string{"FOO", "BAR"},
-		Struct: HoldValMSG{
+		Struct: &HoldValMSG{
 			Int:         1,
 			String:      "Hello",
 			Bool:        true,
@@ -301,7 +301,7 @@ type ValMSG struct {
 	Int         int           `sproto:"integer,0,name=Int"`
 	String      string        `sproto:"string,1,name=String"`
 	Bool        bool          `sproto:"boolean,2,name=Bool"`
-	Struct      HoldValMSG    `sproto:"struct,3,name=Struct"`
+	Struct      *HoldValMSG   `sproto:"struct,3,name=Struct"`
 	ByteSlice   []byte        `sproto:"string,4,name=ByteSlice"`
 	BoolSlice   []bool        `sproto:"boolean,5,array,name=BoolSlice"`
 	IntSlice    []int         `sproto:"integer,6,array,name=IntSlice"`
