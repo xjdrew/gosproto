@@ -7,12 +7,27 @@ import (
 )
 
 func TestPtrEncode(t *testing.T) {
+	Reset()
 	ptrMsgData, err := Encode(&ptrMsg)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
+	// 测试对nil值的支持
+	Reset()
+	ptrMsg.Int = nil
+	ptrMsg.Bool = nil
+	ptrMsg.StructSlice = nil
+	ptrMsg.Struct = nil
+	ptrMsgData, err = Encode(&ptrMsg)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// 测试解包结果
+	Reset()
 	ptrMsg2 := PtrMSG{}
 	Decode(ptrMsgData, &ptrMsg2)
 	if !reflect.DeepEqual(ptrMsg, ptrMsg2) {
@@ -21,9 +36,10 @@ func TestPtrEncode(t *testing.T) {
 }
 
 func TestValueEncode(t *testing.T) {
+	Reset()
 	msgData, err := Encode(&valMSG)
 	if err != nil {
-		t.Error(err)
+		t.Error(err, msgData)
 		return
 	}
 
@@ -93,6 +109,72 @@ var ptrMsg = PtrMSG{
 			StringSlice: []string{"FOO3", "BAR3"},
 		},
 	},
+}
+
+func Reset() {
+	ptrMsg = PtrMSG{
+		Int:         Int(1),
+		String:      String("Hello"),
+		Bool:        Bool(true),
+		ByteSlice:   []byte("World"),
+		BoolSlice:   []bool{true, true, false, true, false},
+		IntSlice:    []int{123, 321, 1234567},
+		StringSlice: []string{"FOO", "BAR"},
+		Struct: &HoldPtrMSG{
+			Int:         Int(1),
+			String:      String("Hello"),
+			Bool:        Bool(true),
+			ByteSlice:   []byte("World"),
+			BoolSlice:   []bool{true, true, false, true, false},
+			IntSlice:    []int{123, 321, 1234567},
+			StringSlice: []string{"FOO", "BAR"},
+		},
+		StructSlice: []*HoldPtrMSG{
+			&HoldPtrMSG{
+				Int:         Int(2),
+				String:      String("Hello2"),
+				Bool:        Bool(true),
+				ByteSlice:   []byte("World2"),
+				BoolSlice:   []bool{true, true, false, true, false},
+				IntSlice:    []int{123, 321, 1234567},
+				StringSlice: []string{"FOO2", "BAR2"},
+			},
+			&HoldPtrMSG{
+				Int:         Int(3),
+				String:      String("Hello3"),
+				Bool:        Bool(true),
+				ByteSlice:   []byte("World3"),
+				BoolSlice:   []bool{true, true, false, true, false},
+				IntSlice:    []int{123, 321, 1234567},
+				StringSlice: []string{"FOO3", "BAR3"},
+			},
+		},
+	}
+	valMSG = ValMSG{
+		Int:    1,
+		String: "Hello",
+		Bool:   true,
+		StructSlice: []*HoldValMSG{
+			&HoldValMSG{
+				Int:         2,
+				String:      "Foo",
+				Bool:        true,
+				ByteSlice:   []byte("World"),
+				BoolSlice:   []bool{true, true, false, true, false},
+				IntSlice:    []int{123, 321, 1234567},
+				StringSlice: []string{"FOO", "BAR"},
+			},
+			&HoldValMSG{
+				Int:         3,
+				String:      "Foo2",
+				Bool:        true,
+				ByteSlice:   []byte("World"),
+				BoolSlice:   []bool{true, true, false, true, false},
+				IntSlice:    []int{123, 321, 1234567},
+				StringSlice: []string{"FOO", "BAR"},
+			},
+		},
+	}
 }
 
 type ValMSG struct {
