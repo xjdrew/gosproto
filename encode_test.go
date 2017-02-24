@@ -8,6 +8,7 @@ import (
 	"reflect"
 )
 
+// 不影响已有功能测试1
 func TestPtrEncode(t *testing.T) {
 	Reset()
 	ptrMsgData, err := Encode(&ptrMsg)
@@ -24,6 +25,7 @@ func TestPtrEncode(t *testing.T) {
 	}
 }
 
+// 不影响已有功能测试2
 func TestPtrNilEncode(t *testing.T) {
 	// 测试对nil值的支持
 	Reset()
@@ -45,6 +47,7 @@ func TestPtrNilEncode(t *testing.T) {
 	}
 }
 
+// 新特性测试1
 func TestValueEncodeEqualToPtr(t *testing.T) {
 	Reset()
 	valMsgData, err := Encode(&valMSG)
@@ -71,6 +74,24 @@ func TestValueEncodeEqualToPtr(t *testing.T) {
 	Decode(valMsgData, &ptrMsg2)
 	if !reflect.DeepEqual(ptrMsg2, ptrMsg) {
 		t.Error("预期val编码结果应该允许被等价结构的含ptr结构体接收")
+	}
+}
+
+// 新特性测试2
+func TestValueDecode(t *testing.T) {
+	Reset()
+	valMsgData, err := Encode(&valMSG)
+	if err != nil {
+		t.Error(err, valMsgData)
+		return
+	}
+
+	// 预期valMsgData可以被相同的val结构体接收
+	valMsg2 := ValMSG{}
+	_, err = Decode(valMsgData, &valMsg2)
+	if err != nil {
+		t.Error(err)
+		return
 	}
 }
 
