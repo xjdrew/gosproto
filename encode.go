@@ -35,15 +35,27 @@ func writeUint64(buf []byte, v uint64) {
 }
 
 func headerEncodeDefault(sf *SprotoField, v reflect.Value) (uint16, bool) {
-	if v.IsNil() {
+	if !v.IsValid() {
 		return 0, true
+	}
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Map, reflect.Slice:
+		if v.IsNil() {
+			return 0, true
+		}
 	}
 	return 0, false
 }
 
 func headerEncodeBool(sf *SprotoField, v reflect.Value) (uint16, bool) {
-	if v.IsNil() {
+	if !v.IsValid() {
 		return 0, true
+	}
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Map, reflect.Slice:
+		if v.IsNil() {
+			return 0, true
+		}
 	}
 	var n uint16 = 0
 	if v.Elem().Bool() {
@@ -55,6 +67,12 @@ func headerEncodeBool(sf *SprotoField, v reflect.Value) (uint16, bool) {
 func headerEncodeInt(sf *SprotoField, v reflect.Value) (uint16, bool) {
 	if !v.IsValid() {
 		return 0, true
+	}
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Map, reflect.Slice:
+		if v.IsNil() {
+			return 0, true
+		}
 	}
 
 	var n uint64
