@@ -101,7 +101,12 @@ func decodeInt(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error
 
 func decodeString(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
 	str := string(data)
-	*v.Addr().Interface().(**string) = &str
+	if v.Kind() == reflect.Ptr {
+		*v.Addr().Interface().(**string) = &str
+	} else {
+		v.SetString(str)
+	}
+
 	return nil
 }
 
