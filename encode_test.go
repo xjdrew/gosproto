@@ -3,11 +3,11 @@ package sproto
 import (
 	"testing"
 
-	"go.szyhf.org/digo/log"
-
 	"bytes"
 	"encoding/json"
 	"reflect"
+
+	"github.com/xjdrew/gosproto"
 )
 
 // 不影响已有功能测试：Ptr结构可以被编码
@@ -65,8 +65,6 @@ func TestValueEncodeEqualToPtr(t *testing.T) {
 	}
 	if !reflect.DeepEqual(valMsgData, ptrMsgData) {
 		t.Error("ValMsgData exprect equal to PtrMsgData")
-		log.Error(valMsgData)
-		log.Error(ptrMsgData)
 		return
 	}
 
@@ -158,6 +156,23 @@ func TestValueDecodeNil(t *testing.T) {
 	if valMsg2.Int != 0 {
 		t.Error("Expect Int equal to 0")
 		return
+	}
+}
+
+// 与原装的sproto进行比对，看编码结果是否一致
+func TestOldAndNewEncode(t *testing.T) {
+	Reset()
+	// 云风的版本
+	oldMsgData, err := sproto.Encode(&ptrMsg)
+	if err != nil {
+		t.Error(err)
+	}
+	newMsgData, err := Encode(&ptrMsg)
+	if err != nil {
+		t.Error(err)
+	}
+	if !reflect.DeepEqual(oldMsgData, newMsgData) {
+		t.Error("新方案与旧方案的编码结果不一致。")
 	}
 }
 
