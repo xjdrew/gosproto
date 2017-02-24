@@ -5,6 +5,8 @@ import (
 
 	"go.szyhf.org/digo/log"
 
+	"bytes"
+	"encoding/json"
 	"reflect"
 )
 
@@ -79,7 +81,6 @@ func TestValueEncodeEqualToPtr(t *testing.T) {
 
 // 新特性测试:预期valMsgData可以被相同的val结构体接收
 func TestValueDecode(t *testing.T) {
-	log.Debug("========================================")
 	Reset()
 	valMsgData, err := Encode(&valMSG)
 	if err != nil {
@@ -98,6 +99,32 @@ func TestValueDecode(t *testing.T) {
 	// 预期结果应该保持一致
 	if !reflect.DeepEqual(valMSG, valMsg2) {
 		t.Error("ValMsg expect equal to ValMsg2")
+		return
+	}
+}
+
+// 新特性测试：预期ptrMsgData可以被等价的Val结构体接收（补充测试）
+func TestValueEncodeToPtr(t *testing.T) {
+	Reset()
+	ptrMsgData, err := Encode(&ptrMsg)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// 预期可以被等价的val结构体接收
+	valMsg2 := ValMSG{}
+	_, err = Decode(ptrMsgData, &valMsg2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// 通过比对Json结果间接比对接收结果
+	ptrJson, _ := json.Marshal(ptrMsg)
+	valJson, _ := json.Marshal(valMsg2)
+	if !bytes.Equal(ptrJson, valJson) {
+		t.Error("Expect ptrJson Euqal To valJson")
 		return
 	}
 }
