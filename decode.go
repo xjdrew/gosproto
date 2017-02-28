@@ -86,7 +86,16 @@ func decodeInt(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error
 		v.Addr().Elem().Set(reflect.New(e))
 		switch e.Kind() {
 		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
-			v.Elem().SetInt(int64(n))
+			switch len(data) {
+			case 4:
+				v.Elem().SetInt(int64(int32(n)))
+			case 8:
+				v.Elem().SetInt(int64(n))
+			case 0:
+				fallthrough
+			default:
+				v.Elem().SetInt(int64(int16(n)))
+			}
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
 			v.Elem().SetUint(n)
 		}
@@ -95,7 +104,16 @@ func decodeInt(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error
 		v.SetInt(0)
 		switch v.Kind() {
 		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
-			v.SetInt(int64(n))
+			switch len(data) {
+			case 4:
+				v.SetInt(int64(int32(n)))
+			case 8:
+				v.SetInt(int64(n))
+			case 0:
+				fallthrough
+			default:
+				v.SetInt(int64(int16(n)))
+			}
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
 			v.SetUint(n)
 		}

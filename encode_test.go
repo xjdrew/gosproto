@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"reflect"
 
+	"math"
+
 	"github.com/xjdrew/gosproto"
 )
 
@@ -204,6 +206,7 @@ type PtrMSG struct {
 	IntSlice    []int         `sproto:"integer,6,array,name=IntSlice"`
 	StringSlice []string      `sproto:"string,7,array,name=StringSlice"`
 	StructSlice []*HoldPtrMSG `sproto:"struct,8,array,name=StructSlice"`
+	IntNeg      *int          `sproto:"integer,9,name=IntNeg"`
 }
 
 type HoldPtrMSG struct {
@@ -220,7 +223,8 @@ var ptrMsg PtrMSG
 
 func Reset() {
 	ptrMsg = PtrMSG{
-		Int:         Int(1),
+		Int:         Int(math.MaxInt64),
+		IntNeg:      Int(math.MinInt32 + 1),
 		String:      String("Hello"),
 		Bool:        Bool(true),
 		ByteSlice:   []byte("World"),
@@ -258,7 +262,8 @@ func Reset() {
 		},
 	}
 	valMSG = ValMSG{
-		Int:         1,
+		Int:         math.MaxInt64,
+		IntNeg:      math.MinInt32 + 1,
 		String:      "Hello",
 		Bool:        true,
 		ByteSlice:   []byte("World"),
@@ -307,6 +312,7 @@ type ValMSG struct {
 	IntSlice    []int         `sproto:"integer,6,array,name=IntSlice"`
 	StringSlice []string      `sproto:"string,7,array,name=StringSlice"`
 	StructSlice []*HoldValMSG `sproto:"struct,8,array,name=StructSlice"`
+	IntNeg      int           `sproto:"integer,9,name=IntNeg"`
 }
 
 type HoldValMSG struct {
