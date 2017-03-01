@@ -300,15 +300,15 @@ func decodeMessage(chunk []byte, st *SprotoType, v reflect.Value) (int, error) {
 }
 
 func Decode(data []byte, sp interface{}) (int, error) {
-	if len(data) == 0 {
-		return 0, nil
-	}
 	t, v, err := getbase(sp)
 	if err != nil {
 		return 0, err
 	}
 	// clear sp
 	v.Elem().Set(reflect.Zero(t.Elem()))
+	if len(data) == 0 {
+		return 0, nil
+	}
 	st, err := GetSprotoType(t.Elem())
 	if err != nil {
 		return 0, err
