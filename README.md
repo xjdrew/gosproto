@@ -27,6 +27,10 @@ type WithVal struct{
 
 更多的实现效果请参考encode_test.go中的例子。
 
+# 原作者
+
+[xjdrew/gosproto](https://github.com/xjdrew/gosproto)
+
 # gosproto
 [sproto](https://github.com/cloudwu/sproto)'s encoder and decoder in golang.
 
@@ -48,16 +52,15 @@ Or use [sprotodump](https://github.com/lvzixun/sprotodump) to change sproto sche
 
 # test
 ```
-go test github.com/xjdrew/gosproto
+go test github.com/szyhf/go-sproto
 ```
 
 # benchmark
 ```
-$ go test -bench . github.com/xjdrew/gosproto
+BenchmarkEncode-8                 500000              2058 ns/op
+BenchmarkDecode-8                 500000              3222 ns/op
+BenchmarkEncodePacked-8           500000              2523 ns/op
+BenchmarkDecodePacked-8           500000              3660 ns/op
 PASS
-BenchmarkEncode-4         300000      4122 ns/op
-BenchmarkDecode-4         300000      5417 ns/op
-BenchmarkEncodePacked-4122  300000      4712 ns/op
-BenchmarkDecodePacked-4712  200000      6267 ns/op
-ok      github.com/xjdrew/gosproto5.752s
+ok      github.com/szyhf/go-sproto      5.864s
 ```
