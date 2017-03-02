@@ -89,34 +89,34 @@ func (sf *SprotoField) assertWire(expectedWire string, expectedArray bool) error
 func (sf *SprotoField) setEncAndDec(f *reflect.StructField) error {
 	var stype reflect.Type
 	var err error
-	switch t1 := f.Type; t1.Kind() {
-	case reflect.Ptr:
-		switch t2 := t1.Elem(); t2.Kind() {
-		case reflect.Bool:
-			sf.headerEnc = headerEncodeBool
-			sf.dec = decodeBool
-			err = sf.assertWire(WireBooleanName, false)
-		case reflect.Int8, reflect.Uint8, reflect.Int16, reflect.Uint16,
-			reflect.Int32, reflect.Uint32, reflect.Int64, reflect.Uint64,
-			reflect.Int, reflect.Uint:
-			sf.headerEnc = headerEncodeInt
-			sf.enc = encodeInt
-			sf.dec = decodeInt
-			err = sf.assertWire(WireVarintName, false)
-		case reflect.String:
-			sf.headerEnc = headerEncodeDefault
-			sf.enc = encodeString
-			sf.dec = decodeString
-			sf.assertWire(WireBytesName, false)
-		case reflect.Struct:
-			stype = t1.Elem()
-			sf.headerEnc = headerEncodeDefault
-			sf.enc = encodeStruct
-			sf.dec = decodeStruct
-			err = sf.assertWire(WireStructName, false)
-		default:
-			err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s", sf.Name, t1.Kind().String(), t2.Kind().String())
-		}
+	t1 := f.Type
+	if t1.Kind() == reflect.Ptr {
+		t1 = t1.Elem()
+	}
+
+	switch t1.Kind() {
+	case reflect.Bool:
+		sf.headerEnc = headerEncodeBool
+		sf.dec = decodeBool
+		err = sf.assertWire(WireBooleanName, false)
+	case reflect.Int8, reflect.Uint8, reflect.Int16, reflect.Uint16,
+		reflect.Int32, reflect.Uint32, reflect.Int64, reflect.Uint64,
+		reflect.Int, reflect.Uint:
+		sf.headerEnc = headerEncodeInt
+		sf.enc = encodeInt
+		sf.dec = decodeInt
+		err = sf.assertWire(WireVarintName, false)
+	case reflect.String:
+		sf.headerEnc = headerEncodeDefault
+		sf.enc = encodeString
+		sf.dec = decodeString
+		sf.assertWire(WireBytesName, false)
+	case reflect.Struct:
+		stype = t1
+		sf.headerEnc = headerEncodeDefault
+		sf.enc = encodeStruct
+		sf.dec = decodeStruct
+		err = sf.assertWire(WireStructName, false)
 	case reflect.Slice:
 		switch t2 := t1.Elem(); t2.Kind() {
 		case reflect.Bool:

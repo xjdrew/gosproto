@@ -1,8 +1,6 @@
 package sproto
 
-import (
-	"reflect"
-)
+import "reflect"
 
 const (
 	EncodeBufferSize = 4096
@@ -37,15 +35,27 @@ func writeUint64(buf []byte, v uint64) {
 }
 
 func headerEncodeDefault(sf *SprotoField, v reflect.Value) (uint16, bool) {
-	if v.IsNil() {
+	if !v.IsValid() {
 		return 0, true
+	}
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Map, reflect.Slice:
+		if v.IsNil() {
+			return 0, true
+		}
 	}
 	return 0, false
 }
 
 func headerEncodeBool(sf *SprotoField, v reflect.Value) (uint16, bool) {
-	if v.IsNil() {
+	if !v.IsValid() {
 		return 0, true
+	}
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Map, reflect.Slice:
+		if v.IsNil() {
+			return 0, true
+		}
 	}
 	var n uint16 = 0
 	if v.Elem().Bool() {
@@ -55,8 +65,14 @@ func headerEncodeBool(sf *SprotoField, v reflect.Value) (uint16, bool) {
 }
 
 func headerEncodeInt(sf *SprotoField, v reflect.Value) (uint16, bool) {
-	if v.IsNil() {
+	if !v.IsValid() {
 		return 0, true
+	}
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Map, reflect.Slice:
+		if v.IsNil() {
+			return 0, true
+		}
 	}
 
 	var n uint64
@@ -243,7 +259,13 @@ func encodeMessage(st *SprotoType, v reflect.Value) []byte {
 			if nextTag < 0 {
 				continue
 			}
-
+			if v1.Kind() != reflect.Ptr &&
+				v1.Kind() != reflect.Slice &&
+				v1.Kind() != reflect.Array &&
+				v1.Kind() != reflect.Struct {
+				// 替内部处理取地址
+				v1 = v1.Addr()
+			}
 			if header, isNil := sf.headerEnc(sf, v1); !isNil {
 				if skip := skipTag(tag, nextTag); skip > 0 {
 					headers[offset] = skip
