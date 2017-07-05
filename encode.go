@@ -299,3 +299,11 @@ func Encode(sp interface{}) ([]byte, error) {
 	}
 	return encodeMessage(st, v), nil
 }
+
+func MustEncode(sp interface{}) []byte {
+	d, err := Encode(sp)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}

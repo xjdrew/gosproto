@@ -315,3 +315,11 @@ func Decode(data []byte, sp interface{}) (int, error) {
 	}
 	return decodeMessage(data, st, v)
 }
+
+func MustDecode(data []byte, sp interface{}) int {
+	n, err := Decode(data, sp)
+	if err != nil {
+		panic(err)
+	}
+	return n
+}
