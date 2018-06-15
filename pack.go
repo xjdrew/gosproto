@@ -37,7 +37,7 @@ func writeFF(dst, src []byte, n int) {
 
 func Pack(src []byte) []byte {
 	// the worst-case space overhead of packing is 2 bytes per 16 bytes of input
-	maxsz := len(src) + ((len(src)+2047)/2048)*100
+	maxsz := len(src) + ((len(src)+2047)/2048)*100 + 2
 	packed := make([]byte, maxsz, maxsz)
 	offset := 0
 
