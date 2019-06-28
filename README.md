@@ -23,7 +23,7 @@ Or use [sprotodump](https://github.com/lvzixun/sprotodump) to change sproto sche
 ## test
 
 ```
-go test github.com/szyhf/go-sproto
+go test github.com/xjdrew/gosproto
 ```
 
 ## benchmark
