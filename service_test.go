@@ -1,15 +1,13 @@
-package sproto_test
+package sproto
 
 import (
 	"bytes"
 	"testing"
-
-	"github.com/xjdrew/gosproto"
 )
 
 type Test int
 
-var inst Test = Test(5)
+var inst = Test(5)
 
 var barCalled bool
 
@@ -24,7 +22,7 @@ func (t *Test) Foo(resp *FooResponse) {
 	if t != &inst {
 		panic(t)
 	}
-	resp.Ok = sproto.Bool(true)
+	resp.Ok = Bool(true)
 }
 
 func (t *Test) Bar() {
@@ -40,7 +38,7 @@ func TestFoobarService(t *testing.T) {
 	rw := bytes.NewBuffer(nil)
 
 	// client
-	client, _ := sproto.NewService(rw, protocols)
+	client, _ := NewService(rw, protocols)
 	req := FoobarRequest{
 		What: &input,
 	}
@@ -50,7 +48,7 @@ func TestFoobarService(t *testing.T) {
 	}
 
 	// server
-	server, _ := sproto.NewService(rw, protocols)
+	server, _ := NewService(rw, protocols)
 	if err := server.Register(&inst); err != nil {
 		t.Fatalf("register service failed:%s", err)
 	}
@@ -74,14 +72,14 @@ func TestFooService(t *testing.T) {
 	rw := bytes.NewBuffer(nil)
 
 	// client
-	client, _ := sproto.NewService(rw, protocols)
+	client, _ := NewService(rw, protocols)
 	call, err := client.Go(name, nil, nil)
 	if err != nil {
 		t.Fatalf("client call failed:%s", err)
 	}
 
 	// server
-	server, _ := sproto.NewService(rw, protocols)
+	server, _ := NewService(rw, protocols)
 	if err := server.Register(&inst); err != nil {
 		t.Fatalf("register service failed:%s", err)
 	}
@@ -105,7 +103,7 @@ func TestBarService(t *testing.T) {
 	rw := bytes.NewBuffer(nil)
 
 	// client
-	client, _ := sproto.NewService(rw, protocols)
+	client, _ := NewService(rw, protocols)
 	err := client.Invoke(name, nil)
 	if err != nil {
 		t.Fatalf("client call failed:%s", err)
@@ -113,7 +111,7 @@ func TestBarService(t *testing.T) {
 
 	// server
 	barCalled = false
-	server, _ := sproto.NewService(rw, protocols)
+	server, _ := NewService(rw, protocols)
 	if err := server.Register(&inst); err != nil {
 		t.Fatalf("register service failed:%s", err)
 	}

@@ -1,15 +1,11 @@
 package sproto
 
 import (
-	"testing"
-
 	"bytes"
 	"encoding/json"
-	"reflect"
-
 	"math"
-
-	"github.com/xjdrew/gosproto"
+	"reflect"
+	"testing"
 )
 
 // 不影响已有功能测试：Ptr结构可以被编码
@@ -165,7 +161,7 @@ func TestValueDecodeNil(t *testing.T) {
 func TestOldAndNewEncode(t *testing.T) {
 	Reset()
 	// 云风的版本
-	oldMsgData, err := sproto.Encode(&ptrMsg)
+	oldMsgData, err := Encode(&ptrMsg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -182,7 +178,7 @@ func TestOldAndNewEncode(t *testing.T) {
 	// 云风的版本
 	ptrMsg.Int = nil
 	ptrMsg.String = nil
-	oldMsgData, err = sproto.Encode(&ptrMsg)
+	oldMsgData, err = Encode(&ptrMsg)
 	if err != nil {
 		t.Error(err)
 	}

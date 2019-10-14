@@ -1,12 +1,9 @@
-package sproto_test
+package sproto
 
 import (
-	"testing"
-
 	"bytes"
 	"reflect"
-
-	"github.com/xjdrew/gosproto"
+	"testing"
 )
 
 type PhoneNumber struct {
@@ -68,26 +65,26 @@ var abDataPacked []byte = []byte{
 var ab AddressBook = AddressBook{
 	Person: []*Person{
 		&Person{
-			Name: sproto.String("Alice"),
-			Id:   sproto.Int(10000),
+			Name: String("Alice"),
+			Id:   Int(10000),
 			Phone: []*PhoneNumber{
 				&PhoneNumber{
-					Number: sproto.String("123456789"),
-					Type:   sproto.Int(1),
+					Number: String("123456789"),
+					Type:   Int(1),
 				},
 				&PhoneNumber{
-					Number: sproto.String("87654321"),
-					Type:   sproto.Int(2),
+					Number: String("87654321"),
+					Type:   Int(2),
 				},
 			},
 		},
 		&Person{
-			Name: sproto.String("Bob"),
-			Id:   sproto.Int(20000),
+			Name: String("Bob"),
+			Id:   Int(20000),
 			Phone: []*PhoneNumber{
 				&PhoneNumber{
-					Number: sproto.String("01234567890"),
-					Type:   sproto.Int(3),
+					Number: String("01234567890"),
+					Type:   Int(3),
 				},
 			},
 		},
@@ -98,9 +95,9 @@ var testCases []*TestCase = []*TestCase{
 	&TestCase{
 		Name: "SimpleStruct",
 		Struct: &Human{
-			Name:    sproto.String("Alice"),
-			Age:     sproto.Int(13),
-			Marital: sproto.Bool(false),
+			Name:    String("Alice"),
+			Age:     Int(13),
+			Marital: Bool(false),
 		},
 		Data: []byte{
 			0x03, 0x00, // (fn = 3)
@@ -114,16 +111,16 @@ var testCases []*TestCase = []*TestCase{
 	&TestCase{
 		Name: "StructArray",
 		Struct: &Human{
-			Name: sproto.String("Bob"),
-			Age:  sproto.Int(40),
+			Name: String("Bob"),
+			Age:  Int(40),
 			Children: []*Human{
 				&Human{
-					Name: sproto.String("Alice"),
-					Age:  sproto.Int(13),
+					Name: String("Alice"),
+					Age:  Int(13),
 				},
 				&Human{
-					Name: sproto.String("Carol"),
-					Age:  sproto.Int(5),
+					Name: String("Carol"),
+					Age:  Int(5),
 				},
 			},
 		},
@@ -243,8 +240,8 @@ var testCases []*TestCase = []*TestCase{
 	&TestCase{
 		Name: "Number",
 		Struct: &Data{
-			Number:    sproto.Int(100000),
-			BigNumber: sproto.Int64(-10000000000),
+			Number:    Int(100000),
+			BigNumber: Int64(-10000000000),
 		},
 		Data: []byte{
 			0x03, 0x00, // (fn = 3)
@@ -268,7 +265,7 @@ var testCases []*TestCase = []*TestCase{
 
 func TestEncode(t *testing.T) {
 	for _, tc := range testCases {
-		output, err := sproto.Encode(tc.Struct)
+		output, err := Encode(tc.Struct)
 		if err != nil {
 			t.Fatalf("test case *%s* failed with error:%s", tc.Name, err)
 		}
@@ -283,7 +280,7 @@ func TestEncode(t *testing.T) {
 func TestDecode(t *testing.T) {
 	for _, tc := range testCases {
 		sp := reflect.New(reflect.TypeOf(tc.Struct).Elem()).Interface()
-		used, err := sproto.Decode(tc.Data, sp)
+		used, err := Decode(tc.Data, sp)
 		if err != nil {
 			t.Fatalf("test case *%s* failed with error:%s", tc.Name, err)
 		}
@@ -292,7 +289,7 @@ func TestDecode(t *testing.T) {
 			t.Fatalf("test case *%s* failed: data length mismatch", tc.Name)
 		}
 
-		output, err := sproto.Encode(sp)
+		output, err := Encode(sp)
 		if err != nil {
 			t.Fatalf("test case *%s* failed with error:%s", tc.Name, err)
 		}
@@ -306,20 +303,20 @@ func TestDecode(t *testing.T) {
 
 func BenchmarkEncode(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		sproto.Encode(&ab)
+		Encode(&ab)
 	}
 }
 
 func BenchmarkDecode(b *testing.B) {
 	var ab AddressBook
 	for i := 0; i < b.N; i++ {
-		sproto.Decode(abData, &ab)
+		Decode(abData, &ab)
 	}
 }
 
 func BenchmarkEncodePacked(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, err := sproto.EncodePacked(&ab)
+		_, err := EncodePacked(&ab)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -329,7 +326,7 @@ func BenchmarkEncodePacked(b *testing.B) {
 func BenchmarkDecodePacked(b *testing.B) {
 	var ab AddressBook
 	for i := 0; i < b.N; i++ {
-		if err := sproto.DecodePacked(abDataPacked, &ab); err != nil {
+		if err := DecodePacked(abDataPacked, &ab); err != nil {
 			b.Fatal(err)
 		}
 	}

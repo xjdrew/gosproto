@@ -1,10 +1,8 @@
-package sproto_test
+package sproto
 
 import (
 	"bytes"
 	"testing"
-
-	"github.com/xjdrew/gosproto"
 )
 
 type PackTestCase struct {
@@ -47,7 +45,7 @@ var packTestCases []*PackTestCase = []*PackTestCase{
 
 func TestPack(t *testing.T) {
 	for _, tc := range packTestCases {
-		packed := sproto.Pack(tc.Origin)
+		packed := Pack(tc.Origin)
 		if !bytes.Equal(packed, tc.Packed) {
 			t.Log("packed:", packed)
 			t.Log("expected:", tc.Packed)
@@ -59,7 +57,7 @@ func TestPack(t *testing.T) {
 func TestUnpack(t *testing.T) {
 	var allUnpacked, allPacked []byte
 	for _, tc := range packTestCases {
-		unpacked, err := sproto.Unpack(tc.Packed)
+		unpacked, err := Unpack(tc.Packed)
 		if err != nil {
 			t.Fatalf("test case *%s* failed with error:%s", tc.Name, err)
 		}
@@ -68,10 +66,10 @@ func TestUnpack(t *testing.T) {
 			t.Log("expected:", tc.Unpacked)
 			t.Fatalf("test case *%s* failed", tc.Name)
 		}
-		allUnpacked = sproto.Append(allUnpacked, tc.Unpacked)
-		allPacked = sproto.Append(allPacked, tc.Packed)
+		allUnpacked = Append(allUnpacked, tc.Unpacked)
+		allPacked = Append(allPacked, tc.Packed)
 	}
-	unpacked, err := sproto.Unpack(allPacked)
+	unpacked, err := Unpack(allPacked)
 	if err != nil {
 		t.Fatalf("test case *total* failed with error:%s", err)
 	}
