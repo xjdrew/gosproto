@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/xjdrew/gosproto.svg?branch=master)](https://travis-ci.org/xjdrew/gosproto)
 # gosproto
 
 [sproto](https://github.com/cloudwu/sproto)'s encoder and decoder in golang.
