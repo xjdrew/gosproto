@@ -79,3 +79,14 @@ func TestUnpack(t *testing.T) {
 		t.Fatal("test case *total* failed")
 	}
 }
+
+func TestPackUnpack(t *testing.T) {
+	for n := 1; n < 2500; n++ {
+		origin := bytes.Repeat([]byte{0x61}, n)
+		packed := Pack(origin)
+		_, err := Unpack(packed)
+		if err != nil {
+			t.Fatalf("unpack failed for length: %d", n)
+		}
+	}
+}
