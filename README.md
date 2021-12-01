@@ -68,3 +68,12 @@ type WithVal struct{
 > 同样，个人不建议使用值类型的Struct，所以不支持了。
 
 更多的实现效果请参考encode_test.go中的例子。
+
+## TODO
+对 sproto 以下特性的支持缺失：
+原子类型：
+fixed-point number 定点数
+double 双精度浮点数
+符合类型：
+unordered map
+
