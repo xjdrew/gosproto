@@ -71,9 +71,11 @@ type WithVal struct{
 
 ## TODO
 对 sproto 以下特性的支持缺失：
+
 原子类型：
-fixed-point number 定点数
-double 双精度浮点数
-符合类型：
-unordered map
+* fixed-point number 定点数
+* double 双精度浮点数
+
+复合类型：
+* unordered map
 
