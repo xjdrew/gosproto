@@ -64,25 +64,25 @@ var abDataPacked []byte = []byte{
 
 var ab AddressBook = AddressBook{
 	Person: []*Person{
-		&Person{
+		{
 			Name: String("Alice"),
 			Id:   Int(10000),
 			Phone: []*PhoneNumber{
-				&PhoneNumber{
+				{
 					Number: String("123456789"),
 					Type:   Int(1),
 				},
-				&PhoneNumber{
+				{
 					Number: String("87654321"),
 					Type:   Int(2),
 				},
 			},
 		},
-		&Person{
+		{
 			Name: String("Bob"),
 			Id:   Int(20000),
 			Phone: []*PhoneNumber{
-				&PhoneNumber{
+				{
 					Number: String("01234567890"),
 					Type:   Int(3),
 				},
@@ -92,7 +92,7 @@ var ab AddressBook = AddressBook{
 }
 
 var testCases []*TestCase = []*TestCase{
-	&TestCase{
+	{
 		Name: "SimpleStruct",
 		Struct: &Human{
 			Name:    String("Alice"),
@@ -108,17 +108,17 @@ var testCases []*TestCase = []*TestCase{
 			0x41, 0x6C, 0x69, 0x63, 0x65, // ("Alice")
 		},
 	},
-	&TestCase{
+	{
 		Name: "StructArray",
 		Struct: &Human{
 			Name: String("Bob"),
 			Age:  Int(40),
 			Children: []*Human{
-				&Human{
+				{
 					Name: String("Alice"),
 					Age:  Int(13),
 				},
-				&Human{
+				{
 					Name: String("Carol"),
 					Age:  Int(5),
 				},
@@ -147,7 +147,7 @@ var testCases []*TestCase = []*TestCase{
 			0x43, 0x61, 0x72, 0x6F, 0x6C, //("Carol")
 		},
 	},
-	&TestCase{
+	{
 		Name: "NumberArray",
 		Struct: &Data{
 			Numbers: []int64{1, 2, 3, 4, 5},
@@ -165,7 +165,7 @@ var testCases []*TestCase = []*TestCase{
 			0x05, 0x00, 0x00, 0x00, //(5)
 		},
 	},
-	&TestCase{
+	{
 		Name: "BigNumberArray",
 		Struct: &Data{
 			Numbers: []int64{
@@ -185,7 +185,7 @@ var testCases []*TestCase = []*TestCase{
 			0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, //((1<<32) + 3)
 		},
 	},
-	&TestCase{
+	{
 		Name: "BoolArray",
 		Struct: &Data{
 			Bools: []bool{false, true, false},
@@ -201,7 +201,7 @@ var testCases []*TestCase = []*TestCase{
 			0x00, //(false)
 		},
 	},
-	&TestCase{
+	{
 		Name: "Bytes",
 		Struct: &Data{
 			Bytes: []byte{0x28, 0x29, 0x30, 0x31},
@@ -218,7 +218,7 @@ var testCases []*TestCase = []*TestCase{
 			0x31, //(0x31)
 		},
 	},
-	&TestCase{
+	{
 		Name: "StringArray",
 		Struct: &Data{
 			Strings: []string{"Bob", "Alice", "Carol"},
@@ -237,7 +237,7 @@ var testCases []*TestCase = []*TestCase{
 			0x43, 0x61, 0x72, 0x6F, 0x6C, //("Carol")
 		},
 	},
-	&TestCase{
+	{
 		Name: "Number",
 		Struct: &Data{
 			Number:    Int(100000),
@@ -256,7 +256,7 @@ var testCases []*TestCase = []*TestCase{
 			0x00, 0x1C, 0xF4, 0xAB, 0xFD, 0xFF, 0xFF, 0xFF, //(-10000000000, 64bit integer)
 		},
 	},
-	&TestCase{
+	{
 		Name:   "AddressBook",
 		Struct: &ab,
 		Data:   abData,

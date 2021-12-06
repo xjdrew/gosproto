@@ -20,20 +20,20 @@ type FooResponse struct {
 }
 
 var protocols []*Protocol = []*Protocol{
-	&Protocol{
+	{
 		Type:       1,
 		Name:       "test.foobar",
 		MethodName: "Test.Foobar",
 		Request:    reflect.TypeOf(&FoobarRequest{}),
 		Response:   reflect.TypeOf(&FoobarResponse{}),
 	},
-	&Protocol{
+	{
 		Type:       2,
 		Name:       "test.foo",
 		MethodName: "Test.Foo",
 		Response:   reflect.TypeOf(&FooResponse{}),
 	},
-	&Protocol{
+	{
 		Type:       3,
 		Name:       "test.bar",
 		MethodName: "Test.Bar",

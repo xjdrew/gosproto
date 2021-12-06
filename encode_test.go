@@ -237,7 +237,7 @@ func Reset() {
 			StringSlice: []string{"FOO", "BAR"},
 		},
 		StructSlice: []*HoldPtrMSG{
-			&HoldPtrMSG{
+			{
 				Int:         Int(2),
 				String:      String("Hello2"),
 				Bool:        Bool(true),
@@ -246,7 +246,7 @@ func Reset() {
 				IntSlice:    []int{123, 321, 1234567},
 				StringSlice: []string{"FOO2", "BAR2"},
 			},
-			&HoldPtrMSG{
+			{
 				Int:         Int(3),
 				String:      String("Hello3"),
 				Bool:        Bool(true),
@@ -276,7 +276,7 @@ func Reset() {
 			StringSlice: []string{"FOO", "BAR"},
 		},
 		StructSlice: []*HoldValMSG{
-			&HoldValMSG{
+			{
 				Int:         2,
 				String:      "Hello2",
 				Bool:        true,
@@ -285,7 +285,7 @@ func Reset() {
 				IntSlice:    []int{123, 321, 1234567},
 				StringSlice: []string{"FOO2", "BAR2"},
 			},
-			&HoldValMSG{
+			{
 				Int:         3,
 				String:      "Hello3",
 				Bool:        true,
