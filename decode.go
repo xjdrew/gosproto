@@ -2,6 +2,7 @@ package sproto
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"reflect"
 )
@@ -121,6 +122,19 @@ func decodeInt(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error
 	return nil
 }
 
+func decodeDouble(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
+	n := readUint64(data)
+	d := math.Float64frombits(n)
+	if v.Kind() == reflect.Ptr {
+		e := v.Type().Elem()
+		v.Addr().Elem().Set(reflect.New(e))
+		v.Elem().SetFloat(d)
+	} else {
+		v.SetFloat(d)
+	}
+	return nil
+}
+
 func decodeString(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
 	str := string(data)
 	if v.Kind() == reflect.Ptr {
@@ -179,6 +193,30 @@ func decodeIntSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value) 
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
 			val.SetUint(n)
 		}
+	}
+	v.Set(vals)
+	return nil
+}
+
+func decodeDoubleSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
+	dataLen := len(data)
+	if dataLen < 1 {
+		return ErrDecode
+	}
+	if int(data[0]) != DOUBLE_SZ {
+		return fmt.Errorf("sproto: malformed double slice for field %s:%d", sf.Name, int(data[0]))
+	}
+	if (dataLen-1)%DOUBLE_SZ != 0 {
+		return fmt.Errorf("sproto: malformed double data for field %s:%d", sf.Name, dataLen-1)
+	}
+	sz := (dataLen - 1) / DOUBLE_SZ
+	vals := reflect.MakeSlice(v.Type(), sz, sz)
+	data = data[1:]
+	var n uint64
+	for i := 0; i < sz; i++ {
+		n = readUint64(data[i*DOUBLE_SZ:])
+		val := vals.Index(i)
+		val.SetFloat(math.Float64frombits(n))
 	}
 	v.Set(vals)
 	return nil

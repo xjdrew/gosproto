@@ -11,10 +11,12 @@ sproto type      | golang type
 ---------------- | -------------------------------------------------
 string           | \*string, []byte, string
 integer          | \*int8, \*uint8, \*int16, \*uint16, \*int32, \*uint32, \*int64, \*uint64, \*int, \*uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64, int, uint
+double           | \*float64, float64
 boolean          | \*bool, bool
 object           | \*struct
 array of string  | []string
 array of integer | []int8, []uint8, []int16, []uint16, []int32, []uint32, []int64, []uint64, []int, []uint
+array of double  | []double
 array of boolean | []bool
 array of object  | []\*struct
 
@@ -74,7 +76,6 @@ type WithVal struct{
 
 原子类型：
 * fixed-point number 定点数
-* double 双精度浮点数
 
 复合类型：
 * unordered map

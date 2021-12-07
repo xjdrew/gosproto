@@ -1,12 +1,17 @@
 package sproto
 
-import "reflect"
+import (
+	"math"
+	"reflect"
+	"unsafe"
+)
 
 const (
 	EncodeBufferSize = 4096
 	MaxEmbeddedInt   = 0x7fff - 1
 	MaxInt32         = 0x7fffffff
 	MinInt32         = -0x80000000
+	DOUBLE_SZ        = int(unsafe.Sizeof(float64(0.0)))
 )
 
 // little endian
@@ -130,6 +135,13 @@ func encodeInt(sf *SprotoField, v reflect.Value) []byte {
 	return buf
 }
 
+func encodeDouble(sf *SprotoField, v reflect.Value) []byte {
+	n := math.Float64bits(v.Elem().Float())
+	buf := make([]byte, DOUBLE_SZ)
+	writeUint64(buf, n)
+	return buf
+}
+
 func encodeString(sf *SprotoField, v reflect.Value) []byte {
 	str := v.Elem().String()
 	buf := make([]byte, len(str))
@@ -201,6 +213,18 @@ func encodeIntSlice(sf *SprotoField, v reflect.Value) []byte {
 			writeUint64(buf[offset:], val)
 		}
 		offset += intLen
+	}
+	return buf
+}
+
+func encodeDoubleSlice(sf *SprotoField, v reflect.Value) []byte {
+	buf := make([]byte, 1+DOUBLE_SZ*v.Len())
+	buf[0] = uint8(DOUBLE_SZ)
+	offset := 1
+	for i := 0; i < v.Len(); i++ {
+		dv := v.Index(i).Float()
+		writeUint64(buf[offset:], math.Float64bits(dv))
+		offset += DOUBLE_SZ
 	}
 	return buf
 }

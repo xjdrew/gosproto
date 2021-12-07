@@ -62,7 +62,7 @@ func TestValueEncodeEqualToPtr(t *testing.T) {
 		return
 	}
 	if !reflect.DeepEqual(valMsgData, ptrMsgData) {
-		t.Error("ValMsgData exprect equal to PtrMsgData")
+		t.Error("ValMsgData expect to equal with PtrMsgData")
 		return
 	}
 
@@ -196,63 +196,103 @@ type PtrMSG struct {
 	Int         *int          `sproto:"integer,0,name=Int"`
 	String      *string       `sproto:"string,1,name=String"`
 	Bool        *bool         `sproto:"boolean,2,name=Bool"`
-	Struct      *HoldPtrMSG   `sproto:"struct,3,name=Struct"`
-	ByteSlice   []byte        `sproto:"string,4,name=ByteSlice"`
-	BoolSlice   []bool        `sproto:"boolean,5,array,name=BoolSlice"`
-	IntSlice    []int         `sproto:"integer,6,array,name=IntSlice"`
-	StringSlice []string      `sproto:"string,7,array,name=StringSlice"`
-	StructSlice []*HoldPtrMSG `sproto:"struct,8,array,name=StructSlice"`
-	IntNeg      *int          `sproto:"integer,9,name=IntNeg"`
+	Double      *float64      `sproto:"double,3,name=Double"`
+	Struct      *HoldPtrMSG   `sproto:"struct,4,name=Struct"`
+	ByteSlice   []byte        `sproto:"string,5,name=ByteSlice"`
+	BoolSlice   []bool        `sproto:"boolean,6,array,name=BoolSlice"`
+	IntSlice    []int         `sproto:"integer,7,array,name=IntSlice"`
+	DoubleSlice []float64     `sproto:"double,8,array,name=DoubleSlice"`
+	StringSlice []string      `sproto:"string,9,array,name=StringSlice"`
+	StructSlice []*HoldPtrMSG `sproto:"struct,10,array,name=StructSlice"`
+	IntNeg      *int          `sproto:"integer,11,name=IntNeg"`
 }
 
 type HoldPtrMSG struct {
-	Int         *int     `sproto:"integer,0,name=Int"`
-	String      *string  `sproto:"string,1,name=String"`
-	Bool        *bool    `sproto:"boolean,2,name=Bool"`
-	ByteSlice   []byte   `sproto:"string,3,name=ByteSlice"`
-	BoolSlice   []bool   `sproto:"boolean,4,array,name=BoolSlice"`
-	IntSlice    []int    `sproto:"integer,5,array,name=IntSlice"`
-	StringSlice []string `sproto:"string,6,array,name=StringSlice"`
+	Int         *int      `sproto:"integer,0,name=Int"`
+	String      *string   `sproto:"string,1,name=String"`
+	Bool        *bool     `sproto:"boolean,2,name=Bool"`
+	Double      *float64  `sproto:"double,3,name=Double"`
+	ByteSlice   []byte    `sproto:"string,4,name=ByteSlice"`
+	BoolSlice   []bool    `sproto:"boolean,5,array,name=BoolSlice"`
+	IntSlice    []int     `sproto:"integer,6,array,name=IntSlice"`
+	DoubleSlice []float64 `sproto:"double,7,array,name=DoubleSlice"`
+	StringSlice []string  `sproto:"string,8,array,name=StringSlice"`
+}
+
+type ValMSG struct {
+	Int         int           `sproto:"integer,0,name=Int"`
+	String      string        `sproto:"string,1,name=String"`
+	Bool        bool          `sproto:"boolean,2,name=Bool"`
+	Double      float64       `sproto:"double,3,name=Double"`
+	Struct      *HoldValMSG   `sproto:"struct,4,name=Struct"`
+	ByteSlice   []byte        `sproto:"string,5,name=ByteSlice"`
+	BoolSlice   []bool        `sproto:"boolean,6,array,name=BoolSlice"`
+	IntSlice    []int         `sproto:"integer,7,array,name=IntSlice"`
+	DoubleSlice []float64     `sproto:"double,8,array,name=DoubleSlice"`
+	StringSlice []string      `sproto:"string,9,array,name=StringSlice"`
+	StructSlice []*HoldValMSG `sproto:"struct,10,array,name=StructSlice"`
+	IntNeg      int           `sproto:"integer,11,name=IntNeg"`
+}
+
+type HoldValMSG struct {
+	Int         int       `sproto:"integer,0,name=Int"`
+	String      string    `sproto:"string,1,name=String"`
+	Bool        bool      `sproto:"boolean,2,name=Bool"`
+	Double      float64   `sproto:"double,3,name=Double"`
+	ByteSlice   []byte    `sproto:"string,4,name=ByteSlice"`
+	BoolSlice   []bool    `sproto:"boolean,5,array,name=BoolSlice"`
+	IntSlice    []int     `sproto:"integer,6,array,name=IntSlice"`
+	DoubleSlice []float64 `sproto:"double,7,array,name=DoubleSlice"`
+	StringSlice []string  `sproto:"string,8,array,name=StringSlice"`
 }
 
 var ptrMsg PtrMSG
+var valMSG ValMSG
 
 func Reset() {
 	ptrMsg = PtrMSG{
 		Int:         Int(math.MaxInt64),
 		IntNeg:      Int(math.MinInt32 + 1),
+		Double:      Double(math.MaxFloat64),
 		String:      String("Hello"),
 		Bool:        Bool(true),
 		ByteSlice:   []byte("World"),
 		BoolSlice:   []bool{true, true, false, true, false},
 		IntSlice:    []int{123, 321, 1234567},
+		DoubleSlice: []float64{0.123, 0.321, 0.1234567},
 		StringSlice: []string{"FOO", "BAR"},
 		Struct: &HoldPtrMSG{
 			Int:         Int(1),
+			Double:      Double(0.1),
 			String:      String("Hello"),
 			Bool:        Bool(true),
 			ByteSlice:   []byte("World"),
 			BoolSlice:   []bool{true, true, false, true, false},
 			IntSlice:    []int{123, 321, 1234567},
+			DoubleSlice: []float64{0.123, 0.321, 0.1234567},
 			StringSlice: []string{"FOO", "BAR"},
 		},
 		StructSlice: []*HoldPtrMSG{
 			{
 				Int:         Int(2),
+				Double:      Double(0.2),
 				String:      String("Hello2"),
 				Bool:        Bool(true),
 				ByteSlice:   []byte("World2"),
 				BoolSlice:   []bool{true, true, false, true, false},
 				IntSlice:    []int{123, 321, 1234567},
+				DoubleSlice: []float64{0.123, 0.321, 0.1234567},
 				StringSlice: []string{"FOO2", "BAR2"},
 			},
 			{
 				Int:         Int(3),
+				Double:      Double(0.3),
 				String:      String("Hello3"),
 				Bool:        Bool(true),
 				ByteSlice:   []byte("World3"),
 				BoolSlice:   []bool{true, true, false, true, false},
 				IntSlice:    []int{123, 321, 1234567},
+				DoubleSlice: []float64{0.123, 0.321, 0.1234567},
 				StringSlice: []string{"FOO3", "BAR3"},
 			},
 		},
@@ -260,65 +300,48 @@ func Reset() {
 	valMSG = ValMSG{
 		Int:         math.MaxInt64,
 		IntNeg:      math.MinInt32 + 1,
+		Double:      math.MaxFloat64,
 		String:      "Hello",
 		Bool:        true,
 		ByteSlice:   []byte("World"),
 		BoolSlice:   []bool{true, true, false, true, false},
 		IntSlice:    []int{123, 321, 1234567},
+		DoubleSlice: []float64{0.123, 0.321, 0.1234567},
 		StringSlice: []string{"FOO", "BAR"},
 		Struct: &HoldValMSG{
 			Int:         1,
+			Double:      0.1,
 			String:      "Hello",
 			Bool:        true,
 			ByteSlice:   []byte("World"),
 			BoolSlice:   []bool{true, true, false, true, false},
 			IntSlice:    []int{123, 321, 1234567},
+			DoubleSlice: []float64{0.123, 0.321, 0.1234567},
 			StringSlice: []string{"FOO", "BAR"},
 		},
 		StructSlice: []*HoldValMSG{
 			{
 				Int:         2,
+				Double:      0.2,
 				String:      "Hello2",
 				Bool:        true,
 				ByteSlice:   []byte("World2"),
 				BoolSlice:   []bool{true, true, false, true, false},
 				IntSlice:    []int{123, 321, 1234567},
+				DoubleSlice: []float64{0.123, 0.321, 0.1234567},
 				StringSlice: []string{"FOO2", "BAR2"},
 			},
 			{
 				Int:         3,
+				Double:      0.3,
 				String:      "Hello3",
 				Bool:        true,
 				ByteSlice:   []byte("World3"),
 				BoolSlice:   []bool{true, true, false, true, false},
 				IntSlice:    []int{123, 321, 1234567},
+				DoubleSlice: []float64{0.123, 0.321, 0.1234567},
 				StringSlice: []string{"FOO3", "BAR3"},
 			},
 		},
 	}
 }
-
-type ValMSG struct {
-	Int         int           `sproto:"integer,0,name=Int"`
-	String      string        `sproto:"string,1,name=String"`
-	Bool        bool          `sproto:"boolean,2,name=Bool"`
-	Struct      *HoldValMSG   `sproto:"struct,3,name=Struct"`
-	ByteSlice   []byte        `sproto:"string,4,name=ByteSlice"`
-	BoolSlice   []bool        `sproto:"boolean,5,array,name=BoolSlice"`
-	IntSlice    []int         `sproto:"integer,6,array,name=IntSlice"`
-	StringSlice []string      `sproto:"string,7,array,name=StringSlice"`
-	StructSlice []*HoldValMSG `sproto:"struct,8,array,name=StructSlice"`
-	IntNeg      int           `sproto:"integer,9,name=IntNeg"`
-}
-
-type HoldValMSG struct {
-	Int         int      `sproto:"integer,0,name=Int"`
-	String      string   `sproto:"string,1,name=String"`
-	Bool        bool     `sproto:"boolean,2,name=Bool"`
-	ByteSlice   []byte   `sproto:"string,3,name=ByteSlice"`
-	BoolSlice   []bool   `sproto:"boolean,4,array,name=BoolSlice"`
-	IntSlice    []int    `sproto:"integer,5,array,name=IntSlice"`
-	StringSlice []string `sproto:"string,6,array,name=StringSlice"`
-}
-
-var valMSG ValMSG

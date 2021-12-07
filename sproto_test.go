@@ -30,12 +30,15 @@ type Human struct {
 }
 
 type Data struct {
-	Numbers   []int64  `sproto:"integer,0,array,name=numbers"`
-	Bools     []bool   `sproto:"boolean,1,array,name=bools"`
-	Number    *int     `sproto:"integer,2,name=number"`
-	BigNumber *int64   `sproto:"integer,3,name=bignumber"`
-	Strings   []string `sproto:"string,4,array,name=strings"`
-	Bytes     []byte   `sproto:"string,5,name=bytes"`
+	Numbers   []int64   `sproto:"integer,0,array,name=numbers"`
+	Bools     []bool    `sproto:"boolean,1,array,name=bools"`
+	Number    *int      `sproto:"integer,2,name=number"`
+	BigNumber *int64    `sproto:"integer,3,name=bignumber"`
+	Double    *float64  `sproto:"double,4,name=double"`
+	Doubles   []float64 `sproto:"double,5,array,name=doubles"`
+
+	Strings []string `sproto:"string,7,array,name=strings"`
+	Bytes   []byte   `sproto:"string,8,name=bytes"`
 }
 
 type TestCase struct {
@@ -208,7 +211,7 @@ var testCases []*TestCase = []*TestCase{
 		},
 		Data: []byte{
 			0x02, 0x00, // (fn = 2)
-			0x09, 0x00, // (skip id = 4)
+			0x0f, 0x00, // (skip id = 7)
 			0x00, 0x00, // (id = 5, value in data part)
 
 			0x04, 0x00, 0x00, 0x00, // (sizeof bytes)
@@ -225,7 +228,7 @@ var testCases []*TestCase = []*TestCase{
 		},
 		Data: []byte{
 			0x02, 0x00, // (fn = 2)
-			0x07, 0x00, // (skip id = 3)
+			0x0d, 0x00, // (skip id = 6)
 			0x00, 0x00, // (id = 4, value in data part)
 
 			0x19, 0x00, 0x00, 0x00, // (sizeof []string)
@@ -254,6 +257,28 @@ var testCases []*TestCase = []*TestCase{
 
 			0x08, 0x00, 0x00, 0x00, //(sizeof bignumber, data part)
 			0x00, 0x1C, 0xF4, 0xAB, 0xFD, 0xFF, 0xFF, 0xFF, //(-10000000000, 64bit integer)
+		},
+	},
+	{
+		Name: "Double",
+		Struct: &Data{
+			Double:  Double(0.01171875),
+			Doubles: []float64{0.01171875, 23, 4},
+		},
+		Data: []byte{
+			0x03, 0x00, // (fn = 3)
+			0x07, 0x00, // (skip id = 3)
+			0x00, 0x00, // (id = 4, value in data part)
+			0x00, 0x00, // (id = 5, value in data part)
+
+			0x08, 0x00, 0x00, 0x00, // (sizeof number, data part)
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x88, 0x3f, // (0.01171875, 64bit double)
+
+			0x19, 0x00, 0x00, 0x00, // (sizeof doubles)
+			0x08,                                           // (sizeof double)
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x88, 0x3f, // (0.01171875, 64bit double)
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x37, 0x40, // (23, 64bit double)
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x40, // (4, 64bit double)
 		},
 	},
 	{

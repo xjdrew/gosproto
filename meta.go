@@ -13,6 +13,7 @@ const (
 	WireVarintName  = "integer" // int, uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64
 	WireBooleanName = "boolean" // bool
 	WireBytesName   = "string"  // string, []byte
+	WireDoubleName  = "double"  // double
 	WireStructName  = "struct"  // struct
 )
 
@@ -21,7 +22,9 @@ var (
 	stMap = make(map[reflect.Type]*SprotoType)
 )
 
-type headerEncoder func(st *SprotoField, v reflect.Value) (uint16, bool)
+type headerEncoder func(st *SprotoField, v reflect.Value) (header uint16, isNil bool)
+
+// TODO: 避免 encoder 分配内存
 type encoder func(st *SprotoField, v reflect.Value) []byte
 type decoder func(val *uint16, data []byte, st *SprotoField, v reflect.Value) error
 
@@ -49,7 +52,7 @@ func (sf *SprotoField) parse(s string) error {
 	}
 	sf.Wire = fields[0]
 	switch sf.Wire {
-	case WireVarintName, WireBooleanName, WireBytesName, WireStructName:
+	case WireVarintName, WireBooleanName, WireBytesName, WireDoubleName, WireStructName:
 	default:
 		return fmt.Errorf("sproto: parse(%s) unknown wire type: %s", s, sf.Wire)
 	}
@@ -67,6 +70,8 @@ func (sf *SprotoField) parse(s string) error {
 			sf.Array = true
 		case strings.HasPrefix(f, "name="):
 			sf.OrigName = f[len("name="):]
+		default:
+			return fmt.Errorf("sproto: parse(%s) unknown meta field: %s", s, f)
 		}
 	}
 	return nil
@@ -106,11 +111,15 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) error {
 		sf.enc = encodeInt
 		sf.dec = decodeInt
 		err = sf.assertWire(WireVarintName, false)
+	case reflect.Float64:
+		sf.headerEnc = headerEncodeDefault
+		sf.enc = encodeDouble
+		sf.dec = decodeDouble
 	case reflect.String:
 		sf.headerEnc = headerEncodeDefault
 		sf.enc = encodeString
 		sf.dec = decodeString
-		sf.assertWire(WireBytesName, false)
+		err = sf.assertWire(WireBytesName, false)
 	case reflect.Struct:
 		stype = t1
 		sf.headerEnc = headerEncodeDefault
@@ -142,11 +151,16 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) error {
 			sf.enc = encodeIntSlice
 			sf.dec = decodeIntSlice
 			err = sf.assertWire(WireVarintName, true)
+		case reflect.Float64:
+			sf.headerEnc = headerEncodeDefault
+			sf.enc = encodeDoubleSlice
+			sf.dec = decodeDoubleSlice
+			err = sf.assertWire(WireDoubleName, true)
 		case reflect.String:
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeStringSlice
 			sf.dec = decodeStringSlice
-			sf.assertWire(WireBytesName, true)
+			err = sf.assertWire(WireBytesName, true)
 		case reflect.Ptr:
 			switch t3 := t2.Elem(); t3.Kind() {
 			case reflect.Struct:

@@ -73,6 +73,10 @@ func Uint(v uint) *uint {
 	return &v
 }
 
+func Double(v float64) *float64 {
+	return &v
+}
+
 // encode && pack
 func EncodePacked(sp interface{}) ([]byte, error) {
 	unpacked, err := Encode(sp)
