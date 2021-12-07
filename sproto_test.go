@@ -212,7 +212,7 @@ var testCases []*TestCase = []*TestCase{
 		Data: []byte{
 			0x02, 0x00, // (fn = 2)
 			0x0f, 0x00, // (skip id = 7)
-			0x00, 0x00, // (id = 5, value in data part)
+			0x00, 0x00, // (id = 8, value in data part)
 
 			0x04, 0x00, 0x00, 0x00, // (sizeof bytes)
 			0x28, //(0x28)
@@ -229,7 +229,7 @@ var testCases []*TestCase = []*TestCase{
 		Data: []byte{
 			0x02, 0x00, // (fn = 2)
 			0x0d, 0x00, // (skip id = 6)
-			0x00, 0x00, // (id = 4, value in data part)
+			0x00, 0x00, // (id = 7, value in data part)
 
 			0x19, 0x00, 0x00, 0x00, // (sizeof []string)
 			0x03, 0x00, 0x00, 0x00, // (sizeof "Bob")

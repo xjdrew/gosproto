@@ -17,6 +17,11 @@ const (
 	WireStructName  = "struct"  // struct
 )
 
+const (
+	TagMin = 0
+	TagMax = 32766
+)
+
 var (
 	mutex sync.Mutex
 	stMap = make(map[reflect.Type]*SprotoType)
@@ -37,7 +42,7 @@ type SprotoField struct {
 
 	st *SprotoType // for struct types only
 
-	index     []int // index sequence for Value.FieldByIndex
+	index     []int // index sequence for Type.FieldByIndex
 	headerEnc headerEncoder
 	enc       encoder
 	dec       decoder
@@ -61,6 +66,10 @@ func (sf *SprotoField) parse(s string) error {
 	sf.Tag, err = strconv.Atoi(fields[1])
 	if err != nil {
 		return fmt.Errorf("sproto: parse(%s) parse tag failed: %s", s, err)
+	}
+
+	if sf.Tag < TagMin || sf.Tag > TagMax {
+		return fmt.Errorf("sproto: parse(%s) tag(%d) overflow", s, sf.Tag)
 	}
 
 	for i := 2; i < len(fields); i++ {
