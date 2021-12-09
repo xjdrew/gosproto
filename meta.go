@@ -34,11 +34,10 @@ type encoder func(st *SprotoField, v reflect.Value) []byte
 type decoder func(val *uint16, data []byte, st *SprotoField, v reflect.Value) error
 
 type SprotoField struct {
-	Name     string
-	OrigName string
-	Wire     string
-	Tag      int
-	Array    bool
+	Name  string
+	Wire  string
+	Tag   int
+	Array bool
 
 	st *SprotoType // for struct types only
 
@@ -78,7 +77,7 @@ func (sf *SprotoField) parse(s string) error {
 		case f == "array":
 			sf.Array = true
 		case strings.HasPrefix(f, "name="):
-			sf.OrigName = f[len("name="):]
+			// sf.OrigName = f[len("name="):]
 		default:
 			return fmt.Errorf("sproto: parse(%s) unknown meta field: %s", s, f)
 		}
@@ -202,7 +201,6 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) error {
 
 func (sf *SprotoField) init(f *reflect.StructField) error {
 	sf.Name = f.Name
-	sf.OrigName = f.Name
 
 	tagString := f.Tag.Get("sproto")
 	if tagString == "" {

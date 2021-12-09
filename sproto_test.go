@@ -7,38 +7,38 @@ import (
 )
 
 type PhoneNumber struct {
-	Number *string `sproto:"string,0,name=number"`
-	Type   *int    `sproto:"integer,1,name=type"`
+	Number *string `sproto:"string,0"`
+	Type   *int    `sproto:"integer,1"`
 }
 
 type Person struct {
-	Name  *string        `sproto:"string,0,name=name"`
-	Id    *int           `sproto:"integer,1,name=id"`
-	Email *string        `sproto:"string,2,name=email"`
-	Phone []*PhoneNumber `sproto:"struct,3,array,name=phone"`
+	Name  *string        `sproto:"string,0"`
+	Id    *int           `sproto:"integer,1"`
+	Email *string        `sproto:"string,2"`
+	Phone []*PhoneNumber `sproto:"struct,3,array"`
 }
 
 type AddressBook struct {
-	Person []*Person `sproto:"struct,0,array,name=person"`
+	Person []*Person `sproto:"struct,0,array"`
 }
 
 type Human struct {
-	Name     *string  `sproto:"string,0,name=name"`
-	Age      *int     `sproto:"integer,1,name=age"`
-	Marital  *bool    `sproto:"boolean,2,name=marital"`
-	Children []*Human `sproto:"struct,3,array,name=children"`
+	Name     *string  `sproto:"string,0"`
+	Age      *int     `sproto:"integer,1"`
+	Marital  *bool    `sproto:"boolean,2"`
+	Children []*Human `sproto:"struct,3,array"`
 }
 
 type Data struct {
-	Numbers   []int64   `sproto:"integer,0,array,name=numbers"`
-	Bools     []bool    `sproto:"boolean,1,array,name=bools"`
-	Number    *int      `sproto:"integer,2,name=number"`
-	BigNumber *int64    `sproto:"integer,3,name=bignumber"`
-	Double    *float64  `sproto:"double,4,name=double"`
-	Doubles   []float64 `sproto:"double,5,array,name=doubles"`
+	Numbers   []int64   `sproto:"integer,0,array"`
+	Bools     []bool    `sproto:"boolean,1,array"`
+	Number    *int      `sproto:"integer,2"`
+	BigNumber *int64    `sproto:"integer,3"`
+	Double    *float64  `sproto:"double,4"`
+	Doubles   []float64 `sproto:"double,5,array"`
 
-	Strings []string `sproto:"string,7,array,name=strings"`
-	Bytes   []byte   `sproto:"string,8,name=bytes"`
+	Strings []string `sproto:"string,7,array"`
+	Bytes   []byte   `sproto:"string,8"`
 }
 
 type TestCase struct {

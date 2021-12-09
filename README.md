@@ -54,11 +54,11 @@ ok      github.com/szyhf/go-sproto      5.864s
 
 ``` golang
 type WithPtr struct{
-	ID *int `sproto:"integer,0,name=ID"`
+	ID *int `sproto:"integer,0"`
 }
 
 type WithVal struct{
-	ID int `sproto:"integer,0,name=ID"`
+	ID int `sproto:"integer,0"`
 }
 
 ```

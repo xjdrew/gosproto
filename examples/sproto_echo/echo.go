@@ -14,11 +14,11 @@ import (
 )
 
 type PingResponse struct {
-	Pong *string `sproto:"string,0,name=pong"`
+	Pong *string `sproto:"string,0"`
 }
 
 type PingRequest struct {
-	Ping *string `sproto:"string,0,name=ping"`
+	Ping *string `sproto:"string,0"`
 }
 
 var Name string = "echo"

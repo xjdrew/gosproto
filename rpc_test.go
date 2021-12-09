@@ -7,16 +7,16 @@ import (
 )
 
 type FoobarRequest struct {
-	What *string `sproto:"string,0,name=what"`
+	What *string `sproto:"string,0"`
 }
 
 type FoobarResponse struct {
-	Ok   *bool   `sproto:"boolean,0,name=ok"`
-	What *string `sproto:"string,1,name=what"`
+	Ok   *bool   `sproto:"boolean,0"`
+	What *string `sproto:"string,1"`
 }
 
 type FooResponse struct {
-	Ok *bool `sproto:"boolean,0,name=ok"`
+	Ok *bool `sproto:"boolean,0"`
 }
 
 var protocols []*Protocol = []*Protocol{
