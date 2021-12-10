@@ -249,6 +249,32 @@ func encodeStructSlice(sf *SprotoField, v reflect.Value) []byte {
 	return buf
 }
 
+// v is a map
+func encodeMap(sf *SprotoField, v reflect.Value) []byte {
+	st := sf.st
+
+	// map conver to slice
+	vals := reflect.MakeSlice(reflect.SliceOf(reflect.PtrTo(st.Type)), 0, v.Len())
+	iter := v.MapRange()
+	for iter.Next() {
+		if sf.ValueTag == -1 {
+			// normal map, slice element = map's value
+			vals = reflect.Append(vals, iter.Value())
+		} else {
+			// simple map, construct slice element by map's key and value
+			keySprotoField := st.FieldByTag(sf.KeyTag)
+			valueSprotoField := st.FieldByTag(sf.ValueTag)
+
+			val := reflect.New(st.Type)
+			elem := val.Elem()
+			elem.FieldByIndex(keySprotoField.field.Index).Set(iter.Key())
+			elem.FieldByIndex(valueSprotoField.field.Index).Set(iter.Value())
+			vals = reflect.Append(vals, val)
+		}
+	}
+	return encodeStructSlice(sf, vals)
+}
+
 func skipTag(tag, nextTag int) uint16 {
 	if nextTag > tag+1 {
 		span := nextTag - tag - 1
@@ -278,7 +304,7 @@ func encodeMessage(st *SprotoType, v reflect.Value) []byte {
 	if !v.IsNil() { // struct could be nil in struct array
 		for _, i := range st.order {
 			sf := st.Fields[i]
-			v1 := v.Elem().FieldByIndex(sf.index)
+			v1 := v.Elem().FieldByIndex(sf.field.Index)
 			nextTag := sf.Tag
 			if nextTag < 0 {
 				continue
@@ -286,7 +312,8 @@ func encodeMessage(st *SprotoType, v reflect.Value) []byte {
 			if v1.Kind() != reflect.Ptr &&
 				v1.Kind() != reflect.Slice &&
 				v1.Kind() != reflect.Array &&
-				v1.Kind() != reflect.Struct {
+				v1.Kind() != reflect.Struct &&
+				v1.Kind() != reflect.Map {
 				// 替内部处理取地址
 				v1 = v1.Addr()
 			}

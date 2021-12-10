@@ -34,26 +34,45 @@ type encoder func(st *SprotoField, v reflect.Value) []byte
 type decoder func(val *uint16, data []byte, st *SprotoField, v reflect.Value) error
 
 type SprotoField struct {
-	Name  string
-	Wire  string
-	Tag   int
-	Array bool
+	field *reflect.StructField // go StructField
+
+	Wire     string
+	Tag      int
+	Array    bool
+	KeyTag   int    // -1 表示无效值
+	ValueTag int    // -1 表示无效值
+	SubType  string // 仅当 ValueTag != 1 时有效
 
 	st *SprotoType // for struct types only
 
-	index     []int // index sequence for Type.FieldByIndex
 	headerEnc headerEncoder
 	enc       encoder
 	dec       decoder
 }
 
+func parseTag(s string) (tag int, err error) {
+	tag, err = strconv.Atoi(s)
+	if err != nil {
+		return
+	}
+	if tag < TagMin || tag > TagMax {
+		err = fmt.Errorf("tag(%d) overflow", tag)
+		return
+	}
+	return
+}
+
 // parse filed meta information
 func (sf *SprotoField) parse(s string) error {
-	// children,object,3,array
+	sf.KeyTag = -1
+	sf.ValueTag = -1
+
+	// wire,tag,options...
 	fields := strings.Split(s, ",")
 	if len(fields) < 2 {
 		return fmt.Errorf("sproto: parse(%s) tag must have 2 or more fields", s)
 	}
+
 	sf.Wire = fields[0]
 	switch sf.Wire {
 	case WireVarintName, WireBooleanName, WireBytesName, WireDoubleName, WireStructName:
@@ -61,45 +80,121 @@ func (sf *SprotoField) parse(s string) error {
 		return fmt.Errorf("sproto: parse(%s) unknown wire type: %s", s, sf.Wire)
 	}
 
+	var tag int
 	var err error
-	sf.Tag, err = strconv.Atoi(fields[1])
+	tag, err = parseTag(fields[1])
 	if err != nil {
-		return fmt.Errorf("sproto: parse(%s) parse tag failed: %s", s, err)
+		return fmt.Errorf("sproto: parse(%s) parse tag option faield: %s", s, err)
 	}
+	sf.Tag = tag
 
-	if sf.Tag < TagMin || sf.Tag > TagMax {
-		return fmt.Errorf("sproto: parse(%s) tag(%d) overflow", s, sf.Tag)
-	}
-
+	// optional options
 	for i := 2; i < len(fields); i++ {
 		f := fields[i]
 		switch {
 		case f == "array":
 			sf.Array = true
-		case strings.HasPrefix(f, "name="):
-			// sf.OrigName = f[len("name="):]
+		case strings.HasPrefix(f, "key="):
+			tag, err = parseTag(f[len("key="):])
+			if err != nil {
+				return fmt.Errorf("parse(%s) parse key option failed:%s", s, err)
+			}
+			sf.KeyTag = tag
+		case strings.HasPrefix(f, "value="):
+			tag, err = parseTag(f[len("value="):])
+			if err != nil {
+				return fmt.Errorf("parse(%s) parse value option failed:%s", s, err)
+			}
+			sf.ValueTag = tag
+		case strings.HasPrefix(f, "subtype="):
+			sf.SubType = f[len("subtype="):]
 		default:
-			return fmt.Errorf("sproto: parse(%s) unknown meta field: %s", s, f)
+			return fmt.Errorf("sproto: parse(%s) unknown option: %s", s, f)
 		}
 	}
+
+	if sf.KeyTag != -1 && !sf.Array {
+		return fmt.Errorf("sproto: parse(%s) failed: KeyTag depends on Array", s)
+	}
+
+	if sf.ValueTag != -1 {
+		if sf.KeyTag == -1 {
+			return fmt.Errorf("sproto: parse(%s) failed: ValueTag depends on KeyTag", s)
+		}
+		if sf.SubType == "" {
+			return fmt.Errorf("sproto: parse(%s) failed: ValueTag depends on SubType", s)
+		}
+	}
+
 	return nil
 }
 
 func (sf *SprotoField) assertWire(expectedWire string, expectedArray bool) error {
 	if sf.Wire != expectedWire {
-		return fmt.Errorf("sproto: field(%s) expect %s but get %s", sf.Name, expectedWire, sf.Wire)
+		return fmt.Errorf("sproto: field(%s) expect %s but get %s", sf.field.Name, expectedWire, sf.Wire)
 	}
 	if sf.Array != expectedArray {
 		n := "not"
 		if expectedArray {
 			n = ""
 		}
-		return fmt.Errorf("sproto: field(%s) should %s be array", sf.Name, n)
+		return fmt.Errorf("sproto: field(%s) should %s be array", sf.field.Name, n)
 	}
 	return nil
 }
 
-func (sf *SprotoField) setEncAndDec(f *reflect.StructField) error {
+// 校验 meta 元信息是否与 map 类型匹配
+func (sf *SprotoField) initMapElemType(mapType reflect.Type, valueType reflect.Type) (err error) {
+	if valueType.Kind() != reflect.Ptr {
+		err = fmt.Errorf("sproto: field(%s) illegal type(%s), expect reflect.Ptr", sf.field.Name, valueType.Kind().String())
+		return
+	}
+
+	elemType := valueType.Elem()
+	if elemType.Kind() != reflect.Struct {
+		err = fmt.Errorf("sproto: field(%s) illegal type(%s), expect reflect.Struct", sf.field.Name, elemType.Kind().String())
+		return
+	}
+
+	// check elemType
+	var stype *SprotoType
+	if stype, err = getSprotoTypeLocked(elemType); err != nil {
+		return
+	}
+
+	keyField := stype.FieldByTag(sf.KeyTag)
+	if keyField == nil {
+		err = fmt.Errorf("sproto: field(%s) key type(%s) no tag(%d) ", sf.field.Name, stype.Type.Name(), sf.KeyTag)
+		return
+	}
+
+	if keyField.Wire != WireVarintName && keyField.Wire != WireBytesName {
+		err = fmt.Errorf("sproto: field(%s) illegal key type(%s), map key must be integer or string", sf.field.Name, keyField.Wire)
+		return
+	}
+
+	if mapType.Key() != keyField.field.Type {
+		err = fmt.Errorf("sproto: field(%s) key type unmatch (%s != %s)", sf.field.Name, mapType.Key().Name(), keyField.field.Type.Name())
+		return
+	}
+
+	if sf.ValueTag != -1 {
+		valueField := stype.FieldByTag(sf.ValueTag)
+		if valueField == nil {
+			err = fmt.Errorf("sproto: field(%s) value type(%s) no tag(%d) ", sf.field.Name, stype.Type.Name(), sf.ValueTag)
+			return
+		}
+
+		if mapType.Elem() != valueField.field.Type {
+			err = fmt.Errorf("sproto: field(%s) value type unmatch (%s != %s)", sf.field.Name, mapType.Elem().Name(), valueField.field.Type.Name())
+			return
+		}
+	}
+	sf.st = stype
+	return
+}
+
+func (sf *SprotoField) initEncAndDec(structType reflect.Type, f *reflect.StructField) error {
 	var stype reflect.Type
 	var err error
 	t1 := f.Type
@@ -172,19 +267,43 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) error {
 		case reflect.Ptr:
 			switch t3 := t2.Elem(); t3.Kind() {
 			case reflect.Struct:
-				stype = t2.Elem()
+				stype = t3
 				sf.headerEnc = headerEncodeDefault
 				sf.enc = encodeStructSlice
 				sf.dec = decodeStructSlice
 				err = sf.assertWire(WireStructName, true)
 			default:
-				err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s -> %s", sf.Name, t1.Kind().String(), t2.Kind().String(), t3.Kind().String())
+				err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s -> %s", sf.field.Name, t1.Kind().String(), t2.Kind().String(), t3.Kind().String())
 			}
 		default:
-			err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s", sf.Name, t1.Kind().String(), t2.Kind().String())
+			err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s", sf.field.Name, t1.Kind().String(), t2.Kind().String())
 		}
+	case reflect.Map:
+		err = sf.assertWire(WireStructName, true)
+		if err != nil {
+			break
+		}
+
+		var valueType reflect.Type
+		if sf.ValueTag == -1 {
+			valueType = t1.Elem()
+		} else {
+			valueField, ok := structType.FieldByName(sf.SubType)
+			if !ok {
+				err = fmt.Errorf("sproto: field(%s) no subtype filed(%s)", sf.field.Name, sf.SubType)
+				break
+			}
+			valueType = valueField.Type
+		}
+		err = sf.initMapElemType(t1, valueType)
+		if err != nil {
+			break
+		}
+		sf.headerEnc = headerEncodeDefault
+		sf.enc = encodeMap
+		sf.dec = decodeMap
 	default:
-		err = fmt.Errorf("sproto: field(%s) no coders for %s", sf.Name, t1.Kind().String())
+		err = fmt.Errorf("sproto: field(%s) no coders for %s", sf.field.Name, t1.Kind().String())
 	}
 
 	if err != nil {
@@ -199,8 +318,8 @@ func (sf *SprotoField) setEncAndDec(f *reflect.StructField) error {
 	return nil
 }
 
-func (sf *SprotoField) init(f *reflect.StructField) error {
-	sf.Name = f.Name
+func (sf *SprotoField) init(structType reflect.Type, f *reflect.StructField) error {
+	sf.field = f
 
 	tagString := f.Tag.Get("sproto")
 	if tagString == "" {
@@ -208,18 +327,18 @@ func (sf *SprotoField) init(f *reflect.StructField) error {
 		return nil
 	}
 
-	sf.index = f.Index
 	if err := sf.parse(tagString); err != nil {
 		return err
 	}
-	if err := sf.setEncAndDec(f); err != nil {
+	if err := sf.initEncAndDec(structType, f); err != nil {
 		return err
 	}
 	return nil
 }
 
 type SprotoType struct {
-	Name   string // struct name
+	Type reflect.Type // go internal type
+
 	Fields []*SprotoField
 	tagMap map[int]int // tag -> fileds index
 	order  []int       // list of struct field numbers in tag order
@@ -258,7 +377,7 @@ func getSprotoTypeLocked(t reflect.Type) (*SprotoType, error) {
 	st := new(SprotoType)
 	stMap[t] = st
 
-	st.Name = t.Name()
+	st.Type = t
 	numField := t.NumField()
 	st.Fields = make([]*SprotoField, numField)
 	st.order = make([]int, numField)
@@ -267,7 +386,7 @@ func getSprotoTypeLocked(t reflect.Type) (*SprotoType, error) {
 	for i := 0; i < numField; i++ {
 		sf := new(SprotoField)
 		f := t.Field(i)
-		if err := sf.init(&f); err != nil {
+		if err := sf.init(t, &f); err != nil {
 			delete(stMap, t)
 			return nil, err
 		}
@@ -277,7 +396,7 @@ func getSprotoTypeLocked(t reflect.Type) (*SprotoType, error) {
 		if sf.Tag >= 0 {
 			// check repeated tag
 			if _, ok := st.tagMap[sf.Tag]; ok {
-				return nil, fmt.Errorf("sproto: field(%s.%s) tag repeated", st.Name, sf.Name)
+				return nil, fmt.Errorf("sproto: field(%s.%s) tag repeated", st.Type.Name(), sf.field.Name)
 			}
 			st.tagMap[sf.Tag] = i
 		}

@@ -10,14 +10,14 @@ import (
 
 // 不影响已有功能测试：Ptr结构可以被编码
 func TestPtrEncode(t *testing.T) {
-	Reset()
+	resetEncodeTestEnv()
 	ptrMsgData, err := Encode(&ptrMsg)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	// 测试解包结果
-	Reset()
+	resetEncodeTestEnv()
 	ptrMsg2 := PtrMSG{}
 	Decode(ptrMsgData, &ptrMsg2)
 	if !reflect.DeepEqual(ptrMsg, ptrMsg2) {
@@ -28,7 +28,7 @@ func TestPtrEncode(t *testing.T) {
 // 不影响已有功能测试：Ptr结构可以在包含nil的情况下被编码
 func TestPtrNilEncode(t *testing.T) {
 	// 测试对nil值的支持
-	Reset()
+	resetEncodeTestEnv()
 	ptrMsg.Int = nil
 	ptrMsg.Bool = nil
 	ptrMsg.StructSlice = nil
@@ -49,7 +49,7 @@ func TestPtrNilEncode(t *testing.T) {
 
 // 新特性测试: 等价的Val结构和Ptr结构编码结果一致（不考虑ptr为nil）
 func TestValueEncodeEqualToPtr(t *testing.T) {
-	Reset()
+	resetEncodeTestEnv()
 	valMsgData, err := Encode(&valMSG)
 	if err != nil {
 		t.Error(err, valMsgData)
@@ -66,7 +66,7 @@ func TestValueEncodeEqualToPtr(t *testing.T) {
 		return
 	}
 
-	Reset()
+	resetEncodeTestEnv()
 	// 预期val编码结果应该允许被等价结构的含ptr结构体接收
 	ptrMsg2 := PtrMSG{}
 	Decode(valMsgData, &ptrMsg2)
@@ -77,7 +77,7 @@ func TestValueEncodeEqualToPtr(t *testing.T) {
 
 // 新特性测试:预期valMsgData可以被相同的val结构体接收
 func TestValueDecode(t *testing.T) {
-	Reset()
+	resetEncodeTestEnv()
 	valMsgData, err := Encode(&valMSG)
 	if err != nil {
 		t.Error(err, valMsgData)
@@ -101,7 +101,7 @@ func TestValueDecode(t *testing.T) {
 
 // 新特性测试：预期ptrMsgData可以被等价的Val结构体接收（补充测试）
 func TestValueEncodeToPtr(t *testing.T) {
-	Reset()
+	resetEncodeTestEnv()
 	ptrMsgData, err := Encode(&ptrMsg)
 	if err != nil {
 		t.Error(err)
@@ -128,7 +128,7 @@ func TestValueEncodeToPtr(t *testing.T) {
 // 新特性测试：包含部分等价nil的消息可以被正确接收并设置为默认值
 func TestValueDecodeNil(t *testing.T) {
 	// 测试对nil值的支持
-	Reset()
+	resetEncodeTestEnv()
 	ptrMsg.Int = nil
 	ptrMsg.Bool = nil
 	ptrMsg.StructSlice = nil
@@ -159,7 +159,7 @@ func TestValueDecodeNil(t *testing.T) {
 
 // 与原装的sproto进行比对，看编码结果是否一致
 func TestOldAndNewEncode(t *testing.T) {
-	Reset()
+	resetEncodeTestEnv()
 	// 云风的版本
 	oldMsgData, err := Encode(&ptrMsg)
 	if err != nil {
@@ -174,7 +174,7 @@ func TestOldAndNewEncode(t *testing.T) {
 		t.Error("新方案与旧方案的编码结果不一致。")
 	}
 
-	Reset()
+	resetEncodeTestEnv()
 	// 云风的版本
 	ptrMsg.Int = nil
 	ptrMsg.String = nil
@@ -253,7 +253,7 @@ type HoldValMSG struct {
 var ptrMsg PtrMSG
 var valMSG ValMSG
 
-func Reset() {
+func resetEncodeTestEnv() {
 	ptrMsg = PtrMSG{
 		Int:         Int(math.MaxInt64),
 		IntNeg:      Int(math.MinInt32 + 1),

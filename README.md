@@ -19,6 +19,8 @@ array of integer | []int8, []uint8, []int16, []uint16, []int32, []uint32, []int6
 array of double  | []double
 array of boolean | []bool
 array of object  | []\*struct
+map struct(key)  | map[key]struct
+map simple       | map[key]value
 
 ## schema
 
@@ -75,8 +77,5 @@ type WithVal struct{
 对 sproto 以下特性的支持缺失：
 
 原子类型：
-* fixed-point number 定点数
-
-复合类型：
-* unordered map
+* fixed-point number 定点数，建议使用double类型
 

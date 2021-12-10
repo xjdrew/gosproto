@@ -79,7 +79,7 @@ func decodeInt(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error
 		case 8:
 			n = readUint64(data)
 		default:
-			return fmt.Errorf("sproto: malformed integer data for field %s", sf.Name)
+			return fmt.Errorf("sproto: malformed integer data for field %s", sf.field.Name)
 		}
 	}
 	if v.Type().Kind() == reflect.Ptr {
@@ -173,7 +173,7 @@ func decodeIntSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value) 
 	}
 	intLen := int(data[0])
 	if (dataLen-1)%intLen != 0 {
-		return fmt.Errorf("sproto: malformed integer data for field %s", sf.Name)
+		return fmt.Errorf("sproto: malformed integer data for field %s", sf.field.Name)
 	}
 	sz := (dataLen - 1) / intLen
 	vals := reflect.MakeSlice(v.Type(), sz, sz)
@@ -204,10 +204,10 @@ func decodeDoubleSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Valu
 		return ErrDecode
 	}
 	if int(data[0]) != DOUBLE_SZ {
-		return fmt.Errorf("sproto: malformed double slice for field %s:%d", sf.Name, int(data[0]))
+		return fmt.Errorf("sproto: malformed double slice for field %s:%d", sf.field.Name, int(data[0]))
 	}
 	if (dataLen-1)%DOUBLE_SZ != 0 {
-		return fmt.Errorf("sproto: malformed double data for field %s:%d", sf.Name, dataLen-1)
+		return fmt.Errorf("sproto: malformed double data for field %s:%d", sf.field.Name, dataLen-1)
 	}
 	sz := (dataLen - 1) / DOUBLE_SZ
 	vals := reflect.MakeSlice(v.Type(), sz, sz)
@@ -244,33 +244,73 @@ func decodeStruct(val *uint16, data []byte, sf *SprotoField, v reflect.Value) er
 		return err
 	}
 	if used != len(data) {
-		return fmt.Errorf("sproto: malformed struct data for field %s", sf.Name)
+		return fmt.Errorf("sproto: malformed struct data for field %s", sf.field.Name)
 	}
 	v.Addr().Elem().Set(v1)
 	return nil
 }
 
-func decodeStructSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
-	vals := reflect.MakeSlice(v.Type(), 0, 16)
+func decodeStructSliceImpl(val *uint16, data []byte, sf *SprotoField, sliceType reflect.Type) (vals reflect.Value, err error) {
+	vals = reflect.MakeSlice(sliceType, 0, 16)
 	for len(data) > 0 {
-		expected, buf, err := readChunk(data)
-		if err != nil {
-			return err
+		expected, buf, rerr := readChunk(data)
+		if rerr != nil {
+			err = rerr
+			return
 		}
 
 		// v1: pointer to struct
-		v1 := reflect.New(v.Type().Elem().Elem())
-		used, err := decodeMessage(buf, sf.st, v1)
-		if err != nil {
-			return err
+		v1 := reflect.New(sliceType.Elem().Elem())
+		used, derr := decodeMessage(buf, sf.st, v1)
+		if derr != nil {
+			err = derr
+			return
 		}
 		if used != len(buf) {
-			return fmt.Errorf("sproto: malformed struct data for field %s", sf.Name)
+			err = fmt.Errorf("sproto: malformed struct data for field %s", sf.field.Name)
+			return
 		}
 		vals = reflect.Append(vals, v1)
 		data = data[expected:]
 	}
+	return
+}
+
+func decodeStructSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
+	vals, err := decodeStructSliceImpl(val, data, sf, v.Type())
+	if err != nil {
+		return err
+	}
 	v.Set(vals)
+	return nil
+}
+
+func decodeMap(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
+	st := sf.st
+	sliceType := reflect.SliceOf(reflect.PtrTo(st.Type))
+	vals, err := decodeStructSliceImpl(val, data, sf, sliceType)
+	if err != nil {
+		return err
+	}
+
+	m := reflect.MakeMap(v.Type())
+	for i := 0; i < vals.Len(); i++ {
+		val := vals.Index(i)
+
+		elem := val.Elem()
+		keySprotoField := st.FieldByTag(sf.KeyTag)
+		keyVal := elem.FieldByIndex(keySprotoField.field.Index)
+
+		var valueVal reflect.Value
+		if sf.ValueTag == -1 {
+			valueVal = val
+		} else {
+			valueSprotoField := st.FieldByTag(sf.ValueTag)
+			valueVal = elem.FieldByIndex(valueSprotoField.field.Index)
+		}
+		m.SetMapIndex(keyVal, valueVal)
+	}
+	v.Set(m)
 	return nil
 }
 
@@ -307,6 +347,7 @@ func decodeHeader(chunk []byte) (int, []Tag, error) {
 	return expected, tags[:n], nil
 }
 
+// v is a struct pointer
 func decodeMessage(chunk []byte, st *SprotoType, v reflect.Value) (int, error) {
 	var total int
 	var tags []Tag
@@ -315,6 +356,7 @@ func decodeMessage(chunk []byte, st *SprotoType, v reflect.Value) (int, error) {
 		return 0, err
 	}
 
+	elem := v.Elem()
 	for _, tag := range tags {
 		var used int
 		var data []byte
@@ -326,10 +368,10 @@ func decodeMessage(chunk []byte, st *SprotoType, v reflect.Value) (int, error) {
 		}
 		sf := st.FieldByTag(int(tag.Tag))
 		if sf == nil {
-			fmt.Fprintf(os.Stderr, "sproto<%s>: unknown tag %d\n", st.Name, tag.Tag)
+			fmt.Fprintf(os.Stderr, "sproto<%s>: unknown tag %d\n", st.Type.Name(), tag.Tag)
 			continue
 		}
-		v1 := v.Elem().FieldByIndex(sf.index)
+		v1 := elem.FieldByIndex(sf.field.Index)
 		if err = sf.dec(tag.Val, data, sf, v1); err != nil {
 			return 0, err
 		}
@@ -337,7 +379,7 @@ func decodeMessage(chunk []byte, st *SprotoType, v reflect.Value) (int, error) {
 	return total, nil
 }
 
-func Decode(data []byte, sp interface{}) (int, error) {
+func Decode(data []byte, sp interface{}) (used int, err error) {
 	t, v, err := getbase(sp)
 	if err != nil {
 		return 0, err
