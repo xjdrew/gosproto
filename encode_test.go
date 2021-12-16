@@ -198,11 +198,12 @@ type PtrMSG struct {
 	String      *string   `sproto:"string,2"`
 	Bool        *bool     `sproto:"boolean,3"`
 	Double      *float64  `sproto:"double,4"`
-	ByteSlice   []byte    `sproto:"string,5"`
-	BoolSlice   []bool    `sproto:"boolean,6,array"`
-	IntSlice    []int     `sproto:"integer,7,array"`
-	DoubleSlice []float64 `sproto:"double,8,array"`
-	StringSlice []string  `sproto:"string,9,array"`
+	Binary      []byte    `sproto:"binary,5"`
+	ByteSlice   []byte    `sproto:"string,6"`
+	BoolSlice   []bool    `sproto:"boolean,7,array"`
+	IntSlice    []int     `sproto:"integer,8,array"`
+	DoubleSlice []float64 `sproto:"double,9,array"`
+	StringSlice []string  `sproto:"string,10,array"`
 
 	Struct      *HoldPtrMSG   `sproto:"struct,20"`
 	StructSlice []*HoldPtrMSG `sproto:"struct,21,array"`
@@ -214,11 +215,12 @@ type HoldPtrMSG struct {
 	String      *string   `sproto:"string,2"`
 	Bool        *bool     `sproto:"boolean,3"`
 	Double      *float64  `sproto:"double,4"`
-	ByteSlice   []byte    `sproto:"string,5"`
-	BoolSlice   []bool    `sproto:"boolean,6,array"`
-	IntSlice    []int     `sproto:"integer,7,array"`
-	DoubleSlice []float64 `sproto:"double,8,array"`
-	StringSlice []string  `sproto:"string,9,array"`
+	Binary      []byte    `sproto:"binary,5"`
+	ByteSlice   []byte    `sproto:"string,6"`
+	BoolSlice   []bool    `sproto:"boolean,7,array"`
+	IntSlice    []int     `sproto:"integer,8,array"`
+	DoubleSlice []float64 `sproto:"double,9,array"`
+	StringSlice []string  `sproto:"string,10,array"`
 }
 
 type ValMSG struct {
@@ -227,11 +229,12 @@ type ValMSG struct {
 	String      string    `sproto:"string,2"`
 	Bool        bool      `sproto:"boolean,3"`
 	Double      float64   `sproto:"double,4"`
-	ByteSlice   []byte    `sproto:"string,5"`
-	BoolSlice   []bool    `sproto:"boolean,6,array"`
-	IntSlice    []int     `sproto:"integer,7,array"`
-	DoubleSlice []float64 `sproto:"double,8,array"`
-	StringSlice []string  `sproto:"string,9,array"`
+	Binary      []byte    `sproto:"binary,5"`
+	ByteSlice   []byte    `sproto:"string,6"`
+	BoolSlice   []bool    `sproto:"boolean,7,array"`
+	IntSlice    []int     `sproto:"integer,8,array"`
+	DoubleSlice []float64 `sproto:"double,9,array"`
+	StringSlice []string  `sproto:"string,10,array"`
 
 	Struct      *HoldValMSG   `sproto:"struct,20"`
 	StructSlice []*HoldValMSG `sproto:"struct,21,array"`
@@ -243,11 +246,12 @@ type HoldValMSG struct {
 	String      string    `sproto:"string,2"`
 	Bool        bool      `sproto:"boolean,3"`
 	Double      float64   `sproto:"double,4"`
-	ByteSlice   []byte    `sproto:"string,5"`
-	BoolSlice   []bool    `sproto:"boolean,6,array"`
-	IntSlice    []int     `sproto:"integer,7,array"`
-	DoubleSlice []float64 `sproto:"double,8,array"`
-	StringSlice []string  `sproto:"string,9,array"`
+	Binary      []byte    `sproto:"binary,5"`
+	ByteSlice   []byte    `sproto:"string,6"`
+	BoolSlice   []bool    `sproto:"boolean,7,array"`
+	IntSlice    []int     `sproto:"integer,8,array"`
+	DoubleSlice []float64 `sproto:"double,9,array"`
+	StringSlice []string  `sproto:"string,10,array"`
 }
 
 var ptrMsg PtrMSG
@@ -260,6 +264,7 @@ func resetEncodeTestEnv() {
 		Double:      Double(math.MaxFloat64),
 		String:      String("Hello"),
 		Bool:        Bool(true),
+		Binary:      []byte("binary"),
 		ByteSlice:   []byte("World"),
 		BoolSlice:   []bool{true, true, false, true, false},
 		IntSlice:    []int{123, 321, 1234567},
@@ -271,6 +276,7 @@ func resetEncodeTestEnv() {
 			Double:      Double(0.1),
 			String:      String("Hello"),
 			Bool:        Bool(true),
+			Binary:      []byte("binary"),
 			ByteSlice:   []byte("World"),
 			BoolSlice:   []bool{true, true, false, true, false},
 			IntSlice:    []int{123, 321, 1234567},
@@ -284,6 +290,7 @@ func resetEncodeTestEnv() {
 				Double:      Double(0.2),
 				String:      String("Hello2"),
 				Bool:        Bool(true),
+				Binary:      []byte("binary2"),
 				ByteSlice:   []byte("World2"),
 				BoolSlice:   []bool{true, true, false, true, false},
 				IntSlice:    []int{123, 321, 1234567},
@@ -296,6 +303,7 @@ func resetEncodeTestEnv() {
 				Double:      Double(0.3),
 				String:      String("Hello3"),
 				Bool:        Bool(true),
+				Binary:      []byte("binary3"),
 				ByteSlice:   []byte("World3"),
 				BoolSlice:   []bool{true, true, false, true, false},
 				IntSlice:    []int{123, 321, 1234567},
@@ -310,6 +318,7 @@ func resetEncodeTestEnv() {
 		Double:      math.MaxFloat64,
 		String:      "Hello",
 		Bool:        true,
+		Binary:      []byte("binary"),
 		ByteSlice:   []byte("World"),
 		BoolSlice:   []bool{true, true, false, true, false},
 		IntSlice:    []int{123, 321, 1234567},
@@ -321,6 +330,7 @@ func resetEncodeTestEnv() {
 			Double:      0.1,
 			String:      "Hello",
 			Bool:        true,
+			Binary:      []byte("binary"),
 			ByteSlice:   []byte("World"),
 			BoolSlice:   []bool{true, true, false, true, false},
 			IntSlice:    []int{123, 321, 1234567},
@@ -334,6 +344,7 @@ func resetEncodeTestEnv() {
 				Double:      0.2,
 				String:      "Hello2",
 				Bool:        true,
+				Binary:      []byte("binary2"),
 				ByteSlice:   []byte("World2"),
 				BoolSlice:   []bool{true, true, false, true, false},
 				IntSlice:    []int{123, 321, 1234567},
@@ -346,6 +357,7 @@ func resetEncodeTestEnv() {
 				Double:      0.3,
 				String:      "Hello3",
 				Bool:        true,
+				Binary:      []byte("binary3"),
 				ByteSlice:   []byte("World3"),
 				BoolSlice:   []bool{true, true, false, true, false},
 				IntSlice:    []int{123, 321, 1234567},

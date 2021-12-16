@@ -12,7 +12,8 @@ import (
 const (
 	WireVarintName  = "integer" // int, uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64
 	WireBooleanName = "boolean" // bool
-	WireBytesName   = "string"  // string, []byte
+	WireStringName  = "string"  // string
+	WireBytesName   = "binary"  // []byte
 	WireDoubleName  = "double"  // double
 	WireStructName  = "struct"  // struct
 )
@@ -75,7 +76,7 @@ func (sf *SprotoField) parse(s string) error {
 
 	sf.Wire = fields[0]
 	switch sf.Wire {
-	case WireVarintName, WireBooleanName, WireBytesName, WireDoubleName, WireStructName:
+	case WireVarintName, WireBooleanName, WireStringName, WireBytesName, WireDoubleName, WireStructName:
 	default:
 		return fmt.Errorf("sproto: parse(%s) unknown wire type: %s", s, sf.Wire)
 	}
@@ -130,7 +131,7 @@ func (sf *SprotoField) parse(s string) error {
 }
 
 func (sf *SprotoField) assertWire(expectedWire string, expectedArray bool) error {
-	if sf.Wire != expectedWire {
+	if expectedWire != "" && sf.Wire != expectedWire {
 		return fmt.Errorf("sproto: field(%s) expect %s but get %s", sf.field.Name, expectedWire, sf.Wire)
 	}
 	if sf.Array != expectedArray {
@@ -168,7 +169,7 @@ func (sf *SprotoField) initMapElemType(mapType reflect.Type, valueType reflect.T
 		return
 	}
 
-	if keyField.Wire != WireVarintName && keyField.Wire != WireBytesName {
+	if keyField.Wire != WireVarintName && keyField.Wire != WireStringName {
 		err = fmt.Errorf("sproto: field(%s) illegal key type(%s), map key must be integer or string", sf.field.Name, keyField.Wire)
 		return
 	}
@@ -222,7 +223,7 @@ func (sf *SprotoField) initEncAndDec(structType reflect.Type, f *reflect.StructF
 		sf.headerEnc = headerEncodeDefault
 		sf.enc = encodeString
 		sf.dec = decodeString
-		err = sf.assertWire(WireBytesName, false)
+		err = sf.assertWire(WireStringName, false)
 	case reflect.Struct:
 		stype = t1
 		sf.headerEnc = headerEncodeDefault
@@ -238,10 +239,11 @@ func (sf *SprotoField) initEncAndDec(structType reflect.Type, f *reflect.StructF
 			err = sf.assertWire(WireBooleanName, true)
 		case reflect.Uint8:
 			sf.headerEnc = headerEncodeDefault
-			if sf.Wire == WireBytesName {
+			// allowed to be "string" as well as "binary", for compatibility
+			if sf.Wire == WireBytesName || sf.Wire == WireStringName {
 				sf.enc = encodeBytes
 				sf.dec = decodeBytes
-				err = sf.assertWire(WireBytesName, false)
+				err = sf.assertWire("", false)
 			} else {
 				sf.enc = encodeIntSlice
 				sf.dec = decodeIntSlice
@@ -263,7 +265,7 @@ func (sf *SprotoField) initEncAndDec(structType reflect.Type, f *reflect.StructF
 			sf.headerEnc = headerEncodeDefault
 			sf.enc = encodeStringSlice
 			sf.dec = decodeStringSlice
-			err = sf.assertWire(WireBytesName, true)
+			err = sf.assertWire(WireStringName, true)
 		case reflect.Ptr:
 			switch t3 := t2.Elem(); t3.Kind() {
 			case reflect.Struct:
