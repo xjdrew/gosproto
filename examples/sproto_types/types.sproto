@@ -1,0 +1,71 @@
+
+.Person {	# . means a user defined type
+    name 0 : string	# string is a build-in type.
+    id 1 : integer
+    email 2 : string
+
+    .PhoneNumber {	# user defined type can be nest.
+        number 0 : string
+        type 1 : integer
+    }
+
+    phone 3 : *PhoneNumber	# *PhoneNumber means an array of PhoneNumber.
+    height 4 : integer(2)	# (2) means a 1/100 fixed-point number.
+    data 5 : binary		# Some binary data
+    weight 6 : double   # floating number
+}
+
+.CreditCard {
+    card_num 0 : string
+    owner 1 : Person
+}
+
+.Bank {
+    cards 0 : *CreditCard()
+    clients 1 : *Person(id)
+}
+
+.SimpleItem {
+    key 3 : integer
+    value 5 : string
+}
+
+.NodeItem {
+    id 0 : integer
+    node 1 : NodeItem
+}
+
+.NestedMapItem {
+    id 0 : integer
+    nested 1 : *SimpleItem()
+}
+
+.NestedArrayItem {
+    id 0 : integer
+    nested 1 : *SimpleItem
+}
+
+.MapStruct {
+    map1 9 : *SimpleItem(key)
+    map2 10 : *SimpleItem()
+    map3 20 : *NodeItem()
+    map4 21 : *NodeItem(id)
+}
+
+.NestedMapStruct {
+    nested_map1 30 : *NestedMapItem()
+    nested_map2 31 : *NestedMapItem(id)
+    nested_arr 40 : *NestedArrayItem()
+}
+
+# 无法定义嵌套递归的类型，比如：
+#
+#  .Nested {
+#      id 1 : int
+#      nested 2 : *Nested()
+#  }
+#  .Struct {
+#      m 1 : *Nested()
+#  }
+#
+# 这里 Struct.m 转换成go类型就是 map[int]map[int]map[int]... 无限递归下去

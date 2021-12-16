@@ -174,8 +174,8 @@ func (sf *SprotoField) initMapElemType(mapType reflect.Type, valueType reflect.T
 		return
 	}
 
-	if mapType.Key() != keyField.field.Type {
-		err = fmt.Errorf("sproto: field(%s) key type unmatch (%s != %s)", sf.field.Name, mapType.Key().Name(), keyField.field.Type.Name())
+	if !isSameBaseType(mapType.Key(), keyField.field.Type) {
+		err = fmt.Errorf("sproto: field(%s) key type unmatched (%s != %s)", sf.field.Name, mapType.Key(), keyField.field.Type)
 		return
 	}
 
@@ -187,7 +187,7 @@ func (sf *SprotoField) initMapElemType(mapType reflect.Type, valueType reflect.T
 		}
 
 		if mapType.Elem() != valueField.field.Type {
-			err = fmt.Errorf("sproto: field(%s) value type unmatch (%s != %s)", sf.field.Name, mapType.Elem().Name(), valueField.field.Type.Name())
+			err = fmt.Errorf("sproto: field(%s) value type unmatched (%s != %s)", sf.field.Name, mapType.Elem().Name(), valueField.field.Type)
 			return
 		}
 	}

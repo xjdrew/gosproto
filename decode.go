@@ -293,13 +293,18 @@ func decodeMap(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error
 		return err
 	}
 
-	m := reflect.MakeMap(v.Type())
+	mt := v.Type()
+	m := reflect.MakeMap(mt)
 	for i := 0; i < vals.Len(); i++ {
 		val := vals.Index(i)
 
 		elem := val.Elem()
 		keySprotoField := st.FieldByTag(sf.KeyTag)
 		keyVal := elem.FieldByIndex(keySprotoField.field.Index)
+		if keyVal.Kind() == reflect.Ptr && keyVal.IsNil() {
+			return fmt.Errorf("sproto: map key is nil, elem: %s%+v", elem.Type(), elem)
+		}
+		keyVal = adjustTypePtr(keyVal, mt.Key())
 
 		var valueVal reflect.Value
 		if sf.ValueTag == -1 {
@@ -308,6 +313,7 @@ func decodeMap(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error
 			valueSprotoField := st.FieldByTag(sf.ValueTag)
 			valueVal = elem.FieldByIndex(valueSprotoField.field.Index)
 		}
+		valueVal = adjustTypePtr(valueVal, mt.Elem())
 		m.SetMapIndex(keyVal, valueVal)
 	}
 	v.Set(m)
@@ -380,6 +386,11 @@ func decodeMessage(chunk []byte, st *SprotoType, v reflect.Value) (int, error) {
 }
 
 func Decode(data []byte, sp interface{}) (used int, err error) {
+	defer func() {
+		if obj := recover(); obj != nil {
+			err = fmt.Errorf("sproto: Decode recovered from panic, err: %v", obj)
+		}
+	}()
 	t, v, err := getbase(sp)
 	if err != nil {
 		return 0, err
