@@ -277,6 +277,17 @@ func (sf *SprotoField) initEncAndDec(structType reflect.Type, f *reflect.StructF
 			default:
 				err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s -> %s", sf.field.Name, t1.Kind().String(), t2.Kind().String(), t3.Kind().String())
 			}
+		case reflect.Slice:
+			// [][]byte
+			switch t3 := t2.Elem(); t3.Kind() {
+			case reflect.Uint8:
+				sf.headerEnc = headerEncodeDefault
+				sf.enc = encodeBytesSlice
+				sf.dec = decodeBytesSlice
+				err = sf.assertWire(WireBytesName, true)
+			default:
+				err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s -> %s", sf.field.Name, t1.Kind().String(), t2.Kind().String(), t3.Kind().String())
+			}
 		default:
 			err = fmt.Errorf("sproto: field(%s) no coders for %s -> %s", sf.field.Name, t1.Kind().String(), t2.Kind().String())
 		}

@@ -35,6 +35,7 @@ func TestTypes(t *testing.T) {
 			Height: ptrInt(178),
 			Data:   []byte("extra data"),
 			Weight: ptrFloat(64.3),
+			Pics:   [][]byte{[]byte("image data1"), []byte("image data2")},
 		}},
 
 		{&CreditCard{
@@ -72,6 +73,18 @@ func TestTypes(t *testing.T) {
 					Id:   ptrInt(3),
 					Node: nil,
 				},
+			},
+		}},
+
+		{&ArraysStruct{
+			IntArr:    []int64{1, 2, 3, 4, 5},
+			BoolArr:   []bool{true, false, true},
+			StrArr:    []string{"str1", "str2", "str3"},
+			BinArr:    [][]byte{[]byte("bin1"), []byte("bin2"), []byte("bin3")},
+			DoubleArr: []float64{1.23, 4.56, 7.89},
+			StructArr: []*SimpleItem{
+				{Key: ptrInt(1), Value: ptrString("v1")},
+				{Key: ptrInt(2), Value: ptrString("v2")},
 			},
 		}},
 

@@ -222,6 +222,20 @@ func decodeDoubleSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Valu
 	return nil
 }
 
+func decodeBytesSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
+	vals := make([][]byte, 0, 16)
+	for len(data) > 0 {
+		expected, val, err := readChunk(data)
+		if err != nil {
+			return err
+		}
+		vals = append(vals, val)
+		data = data[expected:]
+	}
+	v.Set(reflect.ValueOf(vals))
+	return nil
+}
+
 func decodeStringSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
 	vals := make([]string, 0, 16)
 	for len(data) > 0 {

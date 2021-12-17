@@ -13,12 +13,15 @@ import (
 	"github.com/xjdrew/gosproto"
 )
 
-type PingResponse struct {
-	Pong *string `sproto:"string,0"`
-}
+// avoids "imported but not used"
+var _ reflect.Type
 
 type PingRequest struct {
 	Ping *string `sproto:"string,0"`
+}
+
+type PingResponse struct {
+	Pong *string `sproto:"string,0"`
 }
 
 var Name string = "echo"

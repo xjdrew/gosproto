@@ -13,6 +13,7 @@
     height 4 : integer(2)	# (2) means a 1/100 fixed-point number.
     data 5 : binary		# Some binary data
     weight 6 : double   # floating number
+    pics 7 : *binary    # array of binary
 }
 
 .CreditCard {
@@ -33,6 +34,15 @@
 .NodeItem {
     id 0 : integer
     node 1 : NodeItem
+}
+
+.ArraysStruct {
+    int_arr 1 : *integer
+    bool_arr 2 : *boolean
+    str_arr 3 : *string
+    bin_arr 4 : *binary
+    double_arr 5 : *double
+    struct_arr 6 : *SimpleItem
 }
 
 .NestedMapItem {
@@ -69,3 +79,12 @@
 #  }
 #
 # 这里 Struct.m 转换成go类型就是 map[int]map[int]map[int]... 无限递归下去
+
+api 1 {
+    request {
+        ping 0: string
+    }
+    response {
+        pong 0: string
+    }
+}

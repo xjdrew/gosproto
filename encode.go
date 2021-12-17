@@ -175,6 +175,24 @@ func encodeBoolSlice(sf *SprotoField, v reflect.Value) []byte {
 	return buf
 }
 
+func encodeBytesSlice(sf *SprotoField, v reflect.Value) []byte {
+	var sz int
+	for i := 0; i < v.Len(); i++ {
+		bs := v.Index(i).Bytes()
+		sz += 4 + len(bs)
+	}
+	buf := make([]byte, sz)
+	offset := 0
+	for i := 0; i < v.Len(); i++ {
+		bs := v.Index(i).Bytes()
+		strLen := len(bs)
+		writeUint32(buf[offset:], uint32(strLen))
+		copy(buf[offset+4:], bs)
+		offset += 4 + strLen
+	}
+	return buf
+}
+
 func encodeStringSlice(sf *SprotoField, v reflect.Value) []byte {
 	var sz int
 	for i := 0; i < v.Len(); i++ {
