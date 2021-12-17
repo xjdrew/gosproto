@@ -1,6 +1,7 @@
 package sproto
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"unsafe"
@@ -174,6 +175,24 @@ func encodeBoolSlice(sf *SprotoField, v reflect.Value) []byte {
 	return buf
 }
 
+func encodeBytesSlice(sf *SprotoField, v reflect.Value) []byte {
+	var sz int
+	for i := 0; i < v.Len(); i++ {
+		bs := v.Index(i).Bytes()
+		sz += 4 + len(bs)
+	}
+	buf := make([]byte, sz)
+	offset := 0
+	for i := 0; i < v.Len(); i++ {
+		bs := v.Index(i).Bytes()
+		strLen := len(bs)
+		writeUint32(buf[offset:], uint32(strLen))
+		copy(buf[offset+4:], bs)
+		offset += 4 + strLen
+	}
+	return buf
+}
+
 func encodeStringSlice(sf *SprotoField, v reflect.Value) []byte {
 	var sz int
 	for i := 0; i < v.Len(); i++ {
@@ -253,7 +272,7 @@ func encodeStructSlice(sf *SprotoField, v reflect.Value) []byte {
 func encodeMap(sf *SprotoField, v reflect.Value) []byte {
 	st := sf.st
 
-	// map conver to slice
+	// map convert to slice
 	vals := reflect.MakeSlice(reflect.SliceOf(reflect.PtrTo(st.Type)), 0, v.Len())
 	iter := v.MapRange()
 	for iter.Next() {
@@ -267,8 +286,9 @@ func encodeMap(sf *SprotoField, v reflect.Value) []byte {
 
 			val := reflect.New(st.Type)
 			elem := val.Elem()
-			elem.FieldByIndex(keySprotoField.field.Index).Set(iter.Key())
-			elem.FieldByIndex(valueSprotoField.field.Index).Set(iter.Value())
+			// 处理值赋值到指针的情况；比如map key是值类型，但是slice元素字段定义为指针类型
+			setValue(elem.FieldByIndex(keySprotoField.field.Index), iter.Key())
+			setValue(elem.FieldByIndex(valueSprotoField.field.Index), iter.Value())
 			vals = reflect.Append(vals, val)
 		}
 	}
@@ -338,7 +358,12 @@ func encodeMessage(st *SprotoType, v reflect.Value) []byte {
 	return Append(encodeHeaders(headers[:offset], len(buffer)), buffer)
 }
 
-func Encode(sp interface{}) ([]byte, error) {
+func Encode(sp interface{}) (_ []byte, err error) {
+	defer func() {
+		if obj := recover(); obj != nil {
+			err = fmt.Errorf("sproto: Encode recovered from panic, err: %v", obj)
+		}
+	}()
 	t, v, err := getbase(sp)
 	if err != nil {
 		return nil, err

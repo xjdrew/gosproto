@@ -9,7 +9,8 @@
 
 sproto type      | golang type
 ---------------- | -------------------------------------------------
-string           | \*string, []byte, string
+string           | \*string, string
+binary           | []byte
 integer          | \*int8, \*uint8, \*int16, \*uint16, \*int32, \*uint32, \*int64, \*uint64, \*int, \*uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64, int, uint
 double           | \*float64, float64
 boolean          | \*bool, bool
