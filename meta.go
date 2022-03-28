@@ -174,6 +174,7 @@ func (sf *SprotoField) initMapElemType(mapType reflect.Type, valueType reflect.T
 		return
 	}
 
+	// 允许map key定义为值类型，但辅助结构体字段定义为指针类型
 	if !isSameBaseType(mapType.Key(), keyField.field.Type) {
 		err = fmt.Errorf("sproto: field(%s) key type unmatched (%s != %s)", sf.field.Name, mapType.Key(), keyField.field.Type)
 		return
@@ -186,7 +187,8 @@ func (sf *SprotoField) initMapElemType(mapType reflect.Type, valueType reflect.T
 			return
 		}
 
-		if mapType.Elem() != valueField.field.Type {
+		// 允许map value定义为值类型，但辅助结构体字段定义为指针类型
+		if !isSameBaseType(mapType.Elem(), valueField.field.Type) {
 			err = fmt.Errorf("sproto: field(%s) value type unmatched (%s != %s)", sf.field.Name, mapType.Elem().Name(), valueField.field.Type)
 			return
 		}

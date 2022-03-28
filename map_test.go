@@ -42,17 +42,24 @@ type SimpleMapItem struct {
 	V string `sproto:"string,2"`
 }
 
+type SimpleMapPtrItem struct {
+	K *int    `sproto:"integer,1"`
+	V *string `sproto:"string,2"`
+}
+
 type StructMapItem struct {
 	Key   int       `sproto:"integer,3"`
 	Value *NestData `sproto:"struct,5"`
 }
 
 type MapMsg struct {
-	SimpleMap     map[int]string       `sproto:"struct,0,array,key=1,value=2,subtype=simpleMapItem"`
-	StructMap     map[int]*NestData    `sproto:"struct,1,array,key=3,value=5,subtype=structMapItem"`
-	MainIndexMap  map[string]*NestData `sproto:"struct,2,array,key=1"` // value=all
-	simpleMapItem *SimpleMapItem
-	structMapItem *StructMapItem
+	SimpleMap        map[int]string       `sproto:"struct,0,array,key=1,value=2,subtype=simpleMapItem"`
+	SimpleMapPtr     map[int]string       `sproto:"struct,1,array,key=1,value=2,subtype=simpleMapPtrItem"` // 支持item中定义为指针类型，但map定义为值类型
+	StructMap        map[int]*NestData    `sproto:"struct,2,array,key=3,value=5,subtype=structMapItem"`
+	MainIndexMap     map[string]*NestData `sproto:"struct,3,array,key=1"` // value=all
+	simpleMapItem    *SimpleMapItem
+	simpleMapPtrItem *SimpleMapPtrItem
+	structMapItem    *StructMapItem
 }
 
 type ArrayMsg struct {
@@ -64,6 +71,10 @@ type ArrayMsg struct {
 var (
 	mapMsg = MapMsg{
 		SimpleMap: map[int]string{
+			1: "v1",
+			2: "v2",
+		},
+		SimpleMapPtr: map[int]string{
 			1: "v1",
 			2: "v2",
 		},
