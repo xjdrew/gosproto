@@ -168,16 +168,20 @@ func decodeBoolSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value)
 
 func decodeIntSlice(val *uint16, data []byte, sf *SprotoField, v reflect.Value) error {
 	dataLen := len(data)
-	if dataLen < 1 {
-		return ErrDecode
+	intLen := 4
+
+	if dataLen > 0 {
+		intLen = int(data[0])
+		dataLen = dataLen - 1
+		data = data[1:]
 	}
-	intLen := int(data[0])
-	if (dataLen-1)%intLen != 0 {
+
+	if dataLen%intLen != 0 {
 		return fmt.Errorf("sproto: malformed integer data for field %s", sf.field.Name)
 	}
-	sz := (dataLen - 1) / intLen
+
+	sz := dataLen / intLen
 	vals := reflect.MakeSlice(v.Type(), sz, sz)
-	data = data[1:]
 	var n uint64
 	for i := 0; i < sz; i++ {
 		if intLen == 4 {

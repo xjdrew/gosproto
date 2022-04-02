@@ -102,7 +102,7 @@ func extractInt(v reflect.Value) (n uint64, sz int) {
 	case reflect.Int, reflect.Int64:
 		n1 := v.Int()
 		n = uint64(n1)
-		if n1 >= -0x80000000 && n1 <= 0x7fffffff {
+		if n1 >= MinInt32 && n1 <= MaxInt32 {
 			sz = 4
 		} else {
 			sz = 8
@@ -212,6 +212,11 @@ func encodeStringSlice(sf *SprotoField, v reflect.Value) []byte {
 }
 
 func encodeIntSlice(sf *SprotoField, v reflect.Value) []byte {
+	sz := v.Len()
+	if sz == 0 {
+		return []byte{}
+	}
+
 	vals := make([]uint64, v.Len())
 	var intLen int = 4 // could be 4 and 8
 	for i := 0; i < v.Len(); i++ {

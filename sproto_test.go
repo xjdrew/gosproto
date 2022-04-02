@@ -182,7 +182,7 @@ var testCases []*TestCase = []*TestCase{
 			0x00, 0x00, // (id = 0, value in data part)
 
 			0x19, 0x00, 0x00, 0x00, // (sizeof numbers)
-			0x08,                                           //(sizeof int32)
+			0x08,                                           //(sizeof int64)
 			0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, //((1<<32) + 1)
 			0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, //((1<<32) + 2)
 			0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, //((1<<32) + 3)
@@ -286,6 +286,18 @@ var testCases []*TestCase = []*TestCase{
 		Struct: &ab,
 		Data:   abData,
 	},
+	{
+		Name: "EmptyIntSlice",
+		Struct: &Data{
+			Numbers: []int64{},
+		},
+		Data: []byte{
+			0x01, 0x00, // (fn = 1)
+			0x00, 0x00, // (id = 1, value in data part)
+
+			0x00, 0x00, 0x00, 0x00, // (sizeof numbers)
+		},
+	},
 }
 
 func TestEncode(t *testing.T) {
@@ -323,6 +335,27 @@ func TestDecode(t *testing.T) {
 			t.Log("expected:", tc.Data)
 			t.Fatalf("test case %s failed", tc.Name)
 		}
+	}
+}
+
+func TestEmptyIntSliceDecode(t *testing.T) {
+	// second encode format for empty int slice
+	data := []byte{
+		0x01, 0x00, // (fn = 1)
+		0x00, 0x00, // (id = 1, value in data part)
+
+		0x01, 0x00, 0x00, 0x00, // (sizeof numbers)
+		0x04, //(sizeof int32)
+	}
+
+	sp := new(Data)
+	_, err := Decode(data, sp)
+	if err != nil {
+		t.Fatalf("decode failed with error:%s", err)
+	}
+
+	if sp.Numbers == nil || len(sp.Numbers) != 0 {
+		t.Fatalf("decode failed: %v", sp.Numbers)
 	}
 }
 
