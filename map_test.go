@@ -63,9 +63,10 @@ type MapMsg struct {
 }
 
 type ArrayMsg struct {
-	SimpleMap    []*SimpleMapItem `sproto:"struct,0,array"`
-	StructMap    []*StructMapItem `sproto:"struct,1,array"`
-	MainIndexMap []*NestData      `sproto:"struct,2,array"`
+	SimpleMap    []*SimpleMapItem    `sproto:"struct,0,array"`
+	SimpleMapPtr []*SimpleMapPtrItem `sproto:"struct,1,array"`
+	StructMap    []*StructMapItem    `sproto:"struct,2,array"`
+	MainIndexMap []*NestData         `sproto:"struct,3,array"`
 }
 
 var (
@@ -111,6 +112,10 @@ var (
 		SimpleMap: []*SimpleMapItem{
 			{K: 1, V: "v1"},
 			{K: 2, V: "v2"},
+		},
+		SimpleMapPtr: []*SimpleMapPtrItem{
+			{K: Int(1), V: String("v1")},
+			{K: Int(2), V: String("v2")},
 		},
 		StructMap: []*StructMapItem{
 			{
